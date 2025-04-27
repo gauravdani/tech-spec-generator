@@ -13,7 +13,8 @@ const eventCategories = {
             'Remove from Cart',
             'Checkout Start',
             'Checkout Complete',
-            'Payment Info Entered'
+            'Payment Info Entered',
+            'Order Complete'
         ],
         'Product Interaction': [
             'Product Search',
@@ -144,10 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle form submission
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        generatePrompt();
-    });
+    form.addEventListener('submit', generateSpecification);
 
     // Handle copy button click
     copyButton.addEventListener('click', () => {
@@ -199,25 +197,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to generate the prompt
-    function generatePrompt() {
-        const businessType = document.getElementById('businessType').value;
-        const platformType = document.getElementById('platformType').value;
-        const deviceType = document.getElementById('deviceType').value;
-        const trackingTool = document.getElementById('trackingTool').value;
+    // Function to generate specification
+    async function generateSpecification(event) {
+        event.preventDefault();
         
-        const selectedEvents = Array.from(document.querySelectorAll('input[name="events"]:checked'))
-            .map(checkbox => checkbox.value);
+        try {
+            const businessType = document.getElementById('businessType').value;
+            const platformType = document.getElementById('platformType').value;
+            const deviceType = document.getElementById('deviceType').value;
+            const trackingTool = document.getElementById('trackingTool').value;
+            
+            // Get selected events
+            const selectedEvents = Array.from(document.querySelectorAll('input[name="events"]:checked'))
+                .map(checkbox => checkbox.value);
 
-        const prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers. The tracking is to be implemented using ${trackingTool}.
+            // Validate inputs
+            if (!businessType || !platformType || !deviceType || !trackingTool) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (selectedEvents.length === 0) {
+                alert('Please select at least one event to track');
+                return;
+            }
+
+            // Generate the prompt
+            const prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers. The tracking is to be implemented using ${trackingTool}.
 
 The specification should be customized for a ${businessType} business running on ${platformType} for ${deviceType}.
 
-🧩 Include only the following events based on user selection from a list of event categories or individual event names:
+🧩 For each of the following events, create a full section in the document. Do not skip or summarize any event. Every event in this list must have its own section in the output, even if the event seems similar to others:
 
 ${selectedEvents.join(', ')}
 
-For each selected event, include the following:
+For each event, include the following:
 
 📌 Event Name
 
@@ -230,6 +244,13 @@ For each selected event, include the following:
 ⚙️ Trigger instruction — when, where, and under what conditions the event should be triggered
 
 Organize the document so that each event and its code snippet appear together (side by side or one after the other).
+
+FORMATTING REQUIREMENTS:
+- Create properly formatted tables for event properties with clear columns for Property, Required/Optional, Type, Description, and Example Value
+- Format all code snippets using proper code blocks to ensure syntax highlighting and clear distinction from regular text
+- Ensure all code snippets can be easily copied without formatting issues
+- Use consistent heading levels throughout the document for clear hierarchy
+- Use proper spacing between sections for readability
 
 Additional specifications:
 
@@ -245,125 +266,41 @@ Additional specifications:
 
 Write the document in a clear, professional tone — understandable by engineers and product managers alike. Prioritize clarity, structure, and practical implementation.`;
 
-        promptText.textContent = prompt;
+            console.log('Sending prompt:', prompt); // Debug log
 
-        // Call the API to generate the specification
-        callClaudeAPI(prompt);
-    }
+            // Show loading state
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
 
-    // Function to call Claude API
-    async function callClaudeAPI(prompt) {
-        try {
-            // Show loading indicator
-            loadingIndicator.style.display = 'block';
-            outputText.textContent = '';
-            
-            // API endpoint - this points to our local server
-            const apiUrl = '/api/generate-spec';
-            
-            // Make the API call
-            const response = await fetch(apiUrl, {
+            // Make the API call with the prompt
+            const response = await fetch('/api/generate-spec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ prompt }) // Send the formatted prompt instead of individual fields
             });
-            
+
+            // Check if the response is ok
             if (!response.ok) {
-                throw new Error(`API call failed with status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(`API call failed: ${errorData.error || response.statusText}`);
             }
-            
+
             const data = await response.json();
             
-            // Display the response
-            outputText.textContent = data.specification;
-            
+            // Update the output
+            const outputText = document.getElementById('outputText');
+            outputText.innerHTML = data.specification;
+
         } catch (error) {
-            console.error('Error calling Claude API:', error);
-            outputText.textContent = `Error generating specification: ${error.message}. Please try again later.`;
-            
-            // Fallback to mock response if API call fails
-            simulateAPIResponse(prompt);
+            console.error('Error generating specification:', error);
+            const outputText = document.getElementById('outputText');
+            outputText.textContent = `Error: ${error.message}`;
         } finally {
-            // Hide loading indicator
-            loadingIndicator.style.display = 'none';
+            // Hide loading state
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
         }
-    }
-
-    // Fallback function for when API is not available (for demo purposes)
-    function simulateAPIResponse(prompt) {
-        // This is a mock response - in a real implementation, this would be an API call
-        const mockResponse = `# Event Tracking Specification
-
-## Overview
-This document outlines the tracking implementation for ${businessType} platform on ${deviceType} devices using ${trackingTool}.
-
-## User Identity
-- Anonymous users: Tracked via sessionId and deviceId
-- Registered users: Tracked via userId (hashed) and sessionId
-
-## Privacy & Compliance
-- All PII data is hashed before transmission
-- User consent is required for tracking
-- Data retention policy: 90 days
-- GDPR/CCPA compliance implemented
-
-## Events
-
-### User Registration
-**Description:** Tracks when a user completes the registration process
-**Properties:**
-- userId (string, required)
-- sessionId (string, required)
-- deviceId (string, required)
-- registrationMethod (string, optional)
-- timestamp (ISO8601, required)
-
-**Implementation:**
-\`\`\`javascript
-analytics.track('User Registration', {
-  userId: 'user_123',
-  sessionId: 'session_456',
-  deviceId: 'device_789',
-  registrationMethod: 'email',
-  timestamp: new Date().toISOString()
-});
-\`\`\`
-
-### Product View
-**Description:** Tracks when a user views a product
-**Properties:**
-- productId (string, required)
-- productName (string, required)
-- productCategory (string, required)
-- price (number, required)
-- userId (string, optional)
-- sessionId (string, required)
-
-**Implementation:**
-\`\`\`javascript
-analytics.track('Product View', {
-  productId: 'prod_123',
-  productName: 'Premium Widget',
-  productCategory: 'Electronics',
-  price: 99.99,
-  userId: 'user_123',
-  sessionId: 'session_456'
-});
-\`\`\`
-
-## Testing Guidelines
-1. Use the ${trackingTool} debug mode
-2. Verify events in the ${trackingTool} dashboard
-3. Check property types and values
-4. Validate user identification
-
-## Documentation
-- ${trackingTool} SDK Documentation: [Link]
-- Implementation Guide: [Link]
-- Best Practices: [Link]`;
-
-        outputText.textContent = mockResponse;
     }
 }); 
