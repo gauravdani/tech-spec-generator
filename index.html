@@ -42,6 +42,10 @@
         <h2>Generate Your Tech Spec</h2>
         <form id="specForm" class="spec-form">
           <div class="form-group">
+            <label for="businessName">Business Name</label>
+            <input type="text" id="businessName" name="businessName" placeholder="Enter your app or website name" required>
+          </div>
+          <div class="form-group">
             <label for="businessType">Business Type</label>
             <select id="businessType" name="businessType" required>
               <option value="">Select Business Type</option>
@@ -107,12 +111,12 @@
         </div>
 
         <div id="outputSection" class="output-section">
-          <h3>Generated Specification</h3>
+          <h3 id="outputTitle">Generated Specification</h3>
           <div class="output-container">
-            <pre id="outputText"></pre>
-            <button id="copyButton" class="copy-button">
-              <i class="fas fa-copy"></i> Copy to Clipboard
+            <button id="copyButton" class="copy-button" title="Copy to Clipboard">
+              <i class="fas fa-copy"></i>
             </button>
+            <pre id="outputText"></pre>
           </div>
         </div>
       </section>
