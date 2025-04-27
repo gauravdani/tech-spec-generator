@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.prose {
+  @apply text-gray-800;
+}
+
+.prose h1 {
+  @apply text-3xl font-bold mb-4;
+}
+
+.prose h2 {
+  @apply text-2xl font-bold mb-3;
+}
+
+.prose h3 {
+  @apply text-xl font-bold mb-2;
+}
+
+.prose table {
+  @apply w-full border-collapse mb-4;
+}
+
+.prose table th,
+.prose table td {
+  @apply border p-2 text-left;
+}
+
+.prose table th {
+  @apply bg-gray-100;
+}
+
+.prose pre {
+  @apply bg-gray-100 p-4 rounded-lg mb-4 overflow-x-auto;
+}
+
+.prose code {
+  @apply font-mono text-sm;
+} 

@@ -1,8 +1,15 @@
 # Dependencies
 node_modules/
+**/node_modules/
+.pnp
+.pnp.js
 
 # Environment variables
 .env
+.env.*
+!.env.example
+**/config/.env
+**/config/.env.*
 
 # Logs
 logs
@@ -12,6 +19,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+**/logs/
 
 # Runtime data
 pids
@@ -24,6 +32,35 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+*.lcov
+**/coverage/
+
+# Testing
+/coverage
+/.nyc_output
+**/test-results/
+
+# Production build files
+dist/
+**/dist/
+dist-ssr/
+**/dist-ssr/
+build/
+**/build/
+*.local
+
+# Client-specific
+client/.cache/
+client/public/build/
+client/.env
+client/dist/
+client/.vite/
+
+# Server-specific
+server/dist/
+server/.env
+server/build/
+server/tmp/
 
 # IDE - VSCode
 .vscode/*
@@ -32,21 +69,51 @@ coverage
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# IDE - JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IDE - Eclipse
+.project
+.classpath
+.settings/
+
 # Misc
 .DS_Store
+**/.DS_Store
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+*.pem
+.eslintcache
+.node_repl_history
+.npm
 
-dist
-dist-ssr
-*.local
+# Debug
+.debug/
+debug.log
+debug/
+**/debug.log
 
-# Editor directories and files
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+**/tsconfig.tsbuildinfo
+
+# Vite
+**/.vite/
+.vite/
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Cache directories
+.cache/
+**/.cache/
+.temp/
+**/.temp/
