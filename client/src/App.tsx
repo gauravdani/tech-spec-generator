@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { eventsByBusinessType } from './data/events';
+import { eventsByBusinessType, businessTypes, platformTypes, deviceTypes, trackingTools } from './data/events';
 import './App.css';
 
 interface FormData {
   businessType: string;
-  platformType: string;
-  deviceType: string;
+  platformTypes: string[];
+  deviceTypes: string[];
   trackingTool: string;
   selectedEvents: string[];
 }
@@ -18,8 +18,8 @@ function App() {
 
   const [formData, setFormData] = useState<FormData>({
     businessType: 'eCommerce',
-    platformType: 'Web',
-    deviceType: 'Desktop',
+    platformTypes: ['Web'],
+    deviceTypes: ['Desktop'],
     trackingTool: 'GA4',
     selectedEvents: []
   });
@@ -33,17 +33,60 @@ function App() {
   }, [formData.businessType]);
 
   const handleEventToggle = (eventId: string) => {
-    setSelectedEvents(prev => 
-      prev.includes(eventId)
+    setSelectedEvents(prev => {
+      const newSelection = prev.includes(eventId)
         ? prev.filter(id => id !== eventId)
-        : [...prev, eventId]
-    );
+        : [...prev, eventId];
+      console.log('Updated Selected Events:', newSelection);
+      return newSelection;
+    });
+  };
+
+  const handleMultiSelect = (e: React.ChangeEvent<HTMLSelectElement>, field: 'platformTypes' | 'deviceTypes') => {
+    const options = Array.from(e.target.selectedOptions).map(option => option.value);
+    console.log(`${field} selection changed:`, options);
+    setFormData(prev => ({
+      ...prev,
+      [field]: options
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Log the complete form state
+    console.log('Current Form Data:', {
+      businessType: formData.businessType,
+      platformTypes: formData.platformTypes,
+      deviceTypes: formData.deviceTypes,
+      trackingTool: formData.trackingTool,
+      selectedEvents: selectedEvents
+    });
+
+    // Validate each required field
+    const validationErrors = [];
+    
+    if (!formData.businessType) {
+      validationErrors.push('Business Type is required');
+    }
+    if (!formData.platformTypes || formData.platformTypes.length === 0) {
+      validationErrors.push('At least one Platform Type is required');
+    }
+    if (!formData.deviceTypes || formData.deviceTypes.length === 0) {
+      validationErrors.push('At least one Device Type is required');
+    }
+    if (!formData.trackingTool) {
+      validationErrors.push('Tracking Tool is required');
+    }
     if (selectedEvents.length === 0) {
-      setError('Please select at least one event');
+      validationErrors.push('At least one Event must be selected');
+    }
+
+    // Log validation results
+    console.log('Validation Errors:', validationErrors);
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(', '));
       return;
     }
 
@@ -51,25 +94,40 @@ function App() {
     setError(null);
 
     try {
+      // Create the payload
+      const payload = {
+        businessType: formData.businessType,
+        platformTypes: formData.platformTypes,
+        deviceTypes: formData.deviceTypes,
+        trackingTool: formData.trackingTool,
+        selectedEvents: selectedEvents
+      };
+
+      // Log the request payload
+      console.log('Sending Request Payload:', payload);
+
       const response = await fetch('http://localhost:3001/api/generate-spec', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          selectedEvents
-        })
+        body: JSON.stringify(payload)
       });
+
+      // Log the response status
+      console.log('Response Status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Server Error Response:', errorData);
         throw new Error(errorData.error || 'Failed to generate specification');
       }
 
       const data = await response.json();
+      console.log('Server Response Data:', data);
       setResult(data.specification);
     } catch (err) {
+      console.error('Request Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsSubmitting(false);
@@ -100,38 +158,40 @@ function App() {
                   value={formData.businessType}
                   onChange={(e) => setFormData({...formData, businessType: e.target.value})}
                 >
-                  <option value="eCommerce">eCommerce</option>
-                  <option value="SaaS">SaaS</option>
-                  <option value="Gaming">Gaming</option>
-                  <option value="FinTech">FinTech</option>
-                  <option value="Healthcare">Healthcare</option>
+                  {businessTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Platform</label>
+                <label className="block text-gray-700 mb-2">Platform Types (Multiple)</label>
                 <select
-                  className="w-full p-2 border rounded text-gray-800 bg-white"
-                  value={formData.platformType}
-                  onChange={(e) => setFormData({...formData, platformType: e.target.value})}
+                  multiple
+                  className="w-full p-2 border rounded text-gray-800 bg-white h-32"
+                  value={formData.platformTypes}
+                  onChange={(e) => handleMultiSelect(e, 'platformTypes')}
                 >
-                  <option value="Web">Web</option>
-                  <option value="iOS">iOS</option>
-                  <option value="Android">Android</option>
+                  {platformTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
                 </select>
+                <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple platforms</p>
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Device Type</label>
+                <label className="block text-gray-700 mb-2">Device Types (Multiple)</label>
                 <select
-                  className="w-full p-2 border rounded text-gray-800 bg-white"
-                  value={formData.deviceType}
-                  onChange={(e) => setFormData({...formData, deviceType: e.target.value})}
+                  multiple
+                  className="w-full p-2 border rounded text-gray-800 bg-white h-32"
+                  value={formData.deviceTypes}
+                  onChange={(e) => handleMultiSelect(e, 'deviceTypes')}
                 >
-                  <option value="Desktop">Desktop</option>
-                  <option value="Mobile">Mobile</option>
-                  <option value="Tablet">Tablet</option>
+                  {deviceTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
                 </select>
+                <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple devices</p>
               </div>
 
               <div>
@@ -141,9 +201,9 @@ function App() {
                   value={formData.trackingTool}
                   onChange={(e) => setFormData({...formData, trackingTool: e.target.value})}
                 >
-                  <option value="GA4">Google Analytics 4</option>
-                  <option value="Segment">Segment</option>
-                  <option value="Mixpanel">Mixpanel</option>
+                  {trackingTools.map(tool => (
+                    <option key={tool.value} value={tool.value}>{tool.label}</option>
+                  ))}
                 </select>
               </div>
 

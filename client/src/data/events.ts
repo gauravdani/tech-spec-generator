@@ -20,18 +20,62 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'product_clicked', name: 'Product Clicked', description: 'When a user clicks on a product in a list' },
         { id: 'product_searched', name: 'Product Searched', description: 'When a user searches for products' },
         { id: 'product_compared', name: 'Product Compared', description: 'When a user compares products' },
-        { id: 'product_wishlisted', name: 'Product Wishlisted', description: 'When a user adds a product to wishlist' }
+        { id: 'product_shared', name: 'Product Shared', description: 'When a user shares a product' },
+        { id: 'product_reviewed', name: 'Product Reviewed', description: 'When a user reviews a product' },
+        { id: 'product_rated', name: 'Product Rated', description: 'When a user rates a product' },
+        { id: 'product_wishlisted', name: 'Product Wishlisted', description: 'When a user adds to wishlist' },
+        { id: 'wishlist_viewed', name: 'Wishlist Viewed', description: 'When a user views their wishlist' },
+        { id: 'price_drop_alert', name: 'Price Drop Alert Set', description: 'When a user sets a price alert' },
+        { id: 'size_selected', name: 'Size Selected', description: 'When a user selects a size' },
+        { id: 'color_swatch', name: 'Color Swatch Clicked', description: 'When a user clicks a color option' },
+        { id: 'out_of_stock', name: 'Out of Stock Notified', description: 'When user requests stock notification' },
+        { id: 'recently_viewed', name: 'Recently Viewed Viewed', description: 'When user views recent products' },
+        { id: 'back_in_stock', name: 'Back in Stock Alert Clicked', description: 'When user sets back in stock alert' },
+        { id: 'similar_products', name: 'Similar Products Viewed', description: 'When user views similar products' }
       ]
     },
     {
-      id: 'cart',
-      name: 'Cart & Checkout',
+      id: 'checkout',
+      name: 'Checkout & Purchase',
       events: [
-        { id: 'add_to_cart', name: 'Add to Cart', description: 'When a user adds an item to cart' },
-        { id: 'remove_from_cart', name: 'Remove from Cart', description: 'When a user removes an item from cart' },
-        { id: 'begin_checkout', name: 'Begin Checkout', description: 'When a user initiates checkout' },
-        { id: 'add_payment_info', name: 'Add Payment Info', description: 'When a user adds payment information' },
-        { id: 'purchase_complete', name: 'Purchase Complete', description: 'When a user completes a purchase' }
+        { id: 'checkout_started', name: 'Checkout Started', description: 'When a user initiates checkout' },
+        { id: 'shipping_selected', name: 'Shipping Method Selected', description: 'When a user selects shipping' },
+        { id: 'payment_selected', name: 'Payment Method Selected', description: 'When a user selects payment' },
+        { id: 'gift_wrap', name: 'Gift Wrap Selected', description: 'When gift wrapping is selected' },
+        { id: 'promo_applied', name: 'Promo Code Applied', description: 'When a promo code is applied' },
+        { id: 'billing_entered', name: 'Billing Info Entered', description: 'When billing info is provided' },
+        { id: 'address_saved', name: 'Address Saved', description: 'When an address is saved' },
+        { id: 'order_placed', name: 'Order Placed', description: 'When an order is successfully placed' },
+        { id: 'order_failed', name: 'Order Failed', description: 'When an order fails to process' },
+        { id: 'order_confirmed', name: 'Order Confirmed', description: 'When an order is confirmed' },
+        { id: 'order_cancelled', name: 'Order Cancelled', description: 'When an order is cancelled' },
+        { id: 'order_returned', name: 'Order Returned', description: 'When an order is returned' },
+        { id: 'order_tracked', name: 'Order Tracked', description: 'When an order is tracked' },
+        { id: 'refund_initiated', name: 'Refund Initiated', description: 'When a refund is requested' },
+        { id: 'refund_processed', name: 'Refund Processed', description: 'When a refund is processed' }
+      ]
+    }
+  ],
+  OTT: [
+    {
+      id: 'streaming',
+      name: 'Streaming Events',
+      events: [
+        { id: 'video_played', name: 'Video Played', description: 'When a video starts playing' },
+        { id: 'video_paused', name: 'Video Paused', description: 'When a video is paused' },
+        { id: 'video_resumed', name: 'Video Resumed', description: 'When a video resumes playing' },
+        { id: 'video_skipped', name: 'Video Skipped', description: 'When a video is skipped' },
+        { id: 'episode_completed', name: 'Episode Completed', description: 'When an episode finishes' },
+        { id: 'series_followed', name: 'Series Followed', description: 'When a series is followed' },
+        { id: 'series_rated', name: 'Series Rated', description: 'When a series is rated' },
+        { id: 'genre_filter', name: 'Genre Filter Applied', description: 'When genre filter is used' },
+        { id: 'continue_watching', name: 'Continue Watching Clicked', description: 'When continue watching is used' },
+        { id: 'watch_history', name: 'Watched History Viewed', description: 'When watch history is viewed' },
+        { id: 'episode_skipped', name: 'Episode Skipped', description: 'When an episode is skipped' },
+        { id: 'watchlist_added', name: 'Watchlist Added', description: 'When item is added to watchlist' },
+        { id: 'watchlist_removed', name: 'Watchlist Removed', description: 'When item is removed from watchlist' },
+        { id: 'subtitle_on', name: 'Subtitle Turned On', description: 'When subtitles are enabled' },
+        { id: 'audio_changed', name: 'Audio Language Changed', description: 'When audio language is changed' }
       ]
     }
   ],
@@ -155,4 +199,50 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
       ]
     }
   ]
-}; 
+};
+
+export const businessTypes = [
+  { value: 'eCommerce', label: 'eCommerce' },
+  { value: 'OTT', label: 'OTT' },
+  { value: 'SaaS', label: 'SaaS' },
+  { value: 'EdTech', label: 'EdTech' },
+  { value: 'Fintech', label: 'Fintech' },
+  { value: 'Gaming', label: 'Gaming' },
+  { value: 'Healthcare', label: 'Healthcare' },
+  { value: 'RealEstate', label: 'Real Estate' },
+  { value: 'Travel', label: 'Travel' },
+  { value: 'Media', label: 'Media' },
+  { value: 'B2B', label: 'B2B Enterprise' }
+];
+
+export const platformTypes = [
+  { value: 'Web', label: 'Web' },
+  { value: 'iOS', label: 'iOS' },
+  { value: 'Android', label: 'Android' },
+  { value: 'SmartTV', label: 'Smart TV' },
+  { value: 'Console', label: 'Console' }
+];
+
+export const deviceTypes = [
+  { value: 'Desktop', label: 'Desktop' },
+  { value: 'Mobile', label: 'Mobile' },
+  { value: 'Tablet', label: 'Tablet' },
+  { value: 'TV', label: 'TV' }
+];
+
+export const trackingTools = [
+  { value: 'Segment', label: 'Segment' },
+  { value: 'GTM', label: 'Google Tag Manager' },
+  { value: 'RudderStack', label: 'RudderStack' },
+  { value: 'Mixpanel', label: 'Mixpanel' },
+  { value: 'Adobe', label: 'Adobe Analytics' },
+  { value: 'Amplitude', label: 'Amplitude' },
+  { value: 'Heap', label: 'Heap' },
+  { value: 'Pendo', label: 'Pendo' },
+  { value: 'Matomo', label: 'Matomo' },
+  { value: 'Plausible', label: 'Plausible' },
+  { value: 'Snowplow', label: 'Snowplow' },
+  { value: 'Kissmetrics', label: 'Kissmetrics' },
+  { value: 'Hotjar', label: 'Hotjar' },
+  { value: 'GA4', label: 'Google Analytics 4 (GA4)' }
+]; 
