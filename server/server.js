@@ -129,14 +129,19 @@ For each event, include the following:
 
 ⚙️ Trigger instruction — when, where, and under what conditions the event should be triggered
 
-Organize the document so that each event and its code snippet appear together (side by side or one after the other).
+Organize the document so that each event and its code snippet appear together.
 
 FORMATTING REQUIREMENTS:
-- Create properly formatted tables for event properties with clear columns for Property, Required/Optional, Type, Description, and Example Value
-- Format all code snippets using proper code blocks to ensure syntax highlighting and clear distinction from regular text
-- Ensure all code snippets can be easily copied without formatting issues
-- Use consistent heading levels throughout the document for clear hierarchy
-- Use proper spacing between sections for readability
+- Return the content in clean HTML format using semantic tags
+- Use <h1> through <h4> for headings with appropriate hierarchy
+- Use <table> with <thead> and <tbody> for event properties
+- Use <pre><code> for code snippets
+- Use <ul> and <ol> for lists
+- Use <blockquote> for important notes or warnings
+- Use <a> for links with proper href attributes
+- Use <strong> and <em> for emphasis
+- DO NOT include any inline styles or CSS classes
+- DO NOT include any markdown formatting
 
 Additional specifications:
 
@@ -150,7 +155,9 @@ Additional specifications:
 
 📚 Provide references: Link to SDK documentation, JS libraries, CDN links, and other relevant technical sources
 
-Write the document in a clear, professional tone — understandable by engineers and product managers alike. Prioritize clarity, structure, and practical implementation.`;
+Write the document in a clear, professional tone — understandable by engineers and product managers alike. Prioritize clarity, structure, and practical implementation.
+
+IMPORTANT: Return the content in valid HTML format without any inline styles or CSS classes.`;
         }
 
         if (!prompt) {
@@ -219,8 +226,8 @@ Write the document in a clear, professional tone — understandable by engineers
                     if (data && data.type === 'content_block_delta' && data.delta && data.delta.text) {
                         console.log('🟢 SERVER: Found text content, length:', data.delta.text.length);
                         
-                        // Stream the text content to the client
-                        const sseData = `data: ${JSON.stringify({ text: data.delta.text })}\n\n`;
+                        // Stream the HTML content directly to the client
+                        const sseData = `data: ${JSON.stringify({ html: data.delta.text })}\n\n`;
                         res.write(sseData);
                     }
                 } catch (error) {
