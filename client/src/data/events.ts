@@ -325,5 +325,21 @@ export const trackingTools = [
   { value: 'Snowplow', label: 'Snowplow' },
   { value: 'Kissmetrics', label: 'Kissmetrics' },
   { value: 'Hotjar', label: 'Hotjar' },
-  { value: 'GA4', label: 'Google Analytics 4 (GA4)' }
+  { value: 'GA4', label: 'Google Analytics 4 (GA4)' },
+  { value: 'AEP', label: 'Adobe Experience Platform (AEP)' },
+  { value: 'PostHog', label: 'PostHog' },
+  { value: 'FullStory', label: 'FullStory' },
+  { value: 'Kafka', label: 'Kafka' },
+  { value: 'Kinesis', label: 'Kinesis' },
+  { value: 'CloudWatch', label: 'CloudWatch' },
+  { value: 'Google Ads', label: 'Google Ads' },
+  { value: 'TikTok Ads', label: 'TikTok Ads' },
+  { value: 'Snap Ads', label: 'Snap Ads' },
+  { value: 'Pinterest Ads', label: 'Pinterest Ads' },
+  { value: 'LinkedIn Ads', label: 'LinkedIn Ads' },
+  { value: 'Twitter Ads', label: 'Twitter Ads' },
+  { value: 'Facebook Ads', label: 'Facebook Ads' },
+  { value: 'Instagram Ads', label: 'Instagram Ads' },
+  { value: 'LinkedIn Ads', label: 'LinkedIn Ads' },
+  { value: 'Customer Journey Analytics', label: 'Customer Journey Analytics' }
 ]; 
