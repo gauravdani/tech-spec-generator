@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { eventsByBusinessType, businessTypes, trackingTools, platformTypes, deviceTypes } from './data/events';
 import { API_CONFIG } from './config';
 import './App.css';
+import html2pdf from 'html2pdf.js';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [specContent, setSpecContent] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState<string>('');
+  const [pdfLoading, setPdfLoading] = useState<boolean>(false);
   const outputRef = useRef<HTMLDivElement>(null);
 
   // Clear selected events when business type changes
@@ -96,6 +98,96 @@ function App() {
         .catch(err => {
           console.error('Failed to copy text: ', err);
           setCopySuccess('Failed to copy');
+        });
+    }
+  };
+
+  const downloadPDF = () => {
+    if (outputRef.current) {
+      setPdfLoading(true);
+      
+      // Create a clone of the content to avoid modifying the original
+      const contentClone = outputRef.current.cloneNode(true) as HTMLElement;
+      
+      // Add a title to the PDF
+      const title = document.createElement('h1');
+      title.textContent = 'TrackForge AI Specification';
+      title.style.textAlign = 'center';
+      title.style.marginBottom = '20px';
+      title.style.color = '#1e40af';
+      title.style.pageBreakAfter = 'always'; // Force page break after title
+      contentClone.insertBefore(title, contentClone.firstChild);
+      
+      // Add page break controls to headings
+      const headings = contentClone.querySelectorAll('h1, h2, h3');
+      headings.forEach((heading, index) => {
+        // Skip the first heading (title) as we already handled it
+        if (index > 0) {
+          (heading as HTMLElement).style.pageBreakBefore = 'always';
+          (heading as HTMLElement).style.marginTop = '20px';
+        }
+      });
+      
+      // Add page break controls to tables
+      const tables = contentClone.querySelectorAll('table');
+      tables.forEach(table => {
+        (table as HTMLElement).style.pageBreakInside = 'avoid';
+        (table as HTMLElement).style.marginBottom = '20px';
+      });
+      
+      // Add page break controls to code blocks
+      const codeBlocks = contentClone.querySelectorAll('pre');
+      codeBlocks.forEach(codeBlock => {
+        (codeBlock as HTMLElement).style.pageBreakInside = 'avoid';
+        (codeBlock as HTMLElement).style.marginBottom = '20px';
+      });
+      
+      // Add a wrapper div with proper styling for PDF
+      const wrapper = document.createElement('div');
+      wrapper.style.padding = '20px';
+      wrapper.style.fontFamily = 'Arial, sans-serif';
+      wrapper.style.fontSize = '12pt';
+      wrapper.style.lineHeight = '1.5';
+      wrapper.style.color = '#333';
+      
+      // Move the content into the wrapper
+      while (contentClone.firstChild) {
+        wrapper.appendChild(contentClone.firstChild);
+      }
+      contentClone.appendChild(wrapper);
+      
+      // Configure PDF options with improved settings
+      const options = {
+        margin: [15, 15, 15, 15], // [top, right, bottom, left] in mm
+        filename: 'trackforge-specification.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'],
+          before: '.page-break-before',
+          after: '.page-break-after',
+          avoid: ['tr', 'td', 'th', 'img', 'pre', 'code']
+        }
+      };
+      
+      // Generate PDF
+      html2pdf().from(contentClone).set(options).save()
+        .then(() => {
+          setPdfLoading(false);
+        })
+        .catch(err => {
+          console.error('Failed to generate PDF:', err);
+          setPdfLoading(false);
         });
     }
   };
@@ -252,16 +344,40 @@ function App() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Generated Specification</h2>
                 {specContent && (
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                    </svg>
-                    {copySuccess || 'Copy to Clipboard'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={copyToClipboard}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                      </svg>
+                      {copySuccess || 'Copy to Clipboard'}
+                    </button>
+                    <button
+                      onClick={downloadPDF}
+                      disabled={pdfLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {pdfLoading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Generating PDF...
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                          Download PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="flex-1 overflow-y-auto custom-scrollbar relative">
