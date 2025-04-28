@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { API_CONFIG } from '../config';
+import { logger } from '../utils/logger';
 
 interface SavedSpec {
   _id: string;
@@ -11,30 +12,44 @@ interface SavedSpec {
 }
 
 export const SavedSpecs: React.FC = () => {
-  const { data: specs, isLoading, error } = useQuery<SavedSpec[]>({
-    queryKey: ['specs'],
-    queryFn: async () => {
-      const response = await fetch('http://localhost:3001/api/specs');
-      if (!response.ok) throw new Error('Failed to fetch specs');
-      return response.json();
-    }
-  });
+  const [specs, setSpecs] = useState<SavedSpec[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSpecs = async () => {
+      try {
+        logger.info('SavedSpecs', 'Fetching saved specs');
+        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SPECS}`);
+        const data = await response.json();
+        setSpecs(data);
+        logger.info('SavedSpecs', 'Successfully fetched specs', { count: data.length });
+      } catch (error) {
+        logger.error('SavedSpecs', 'Error fetching specs', error);
+        setError('Failed to fetch saved specifications');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSpecs();
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mt-12"
+      className="mt-12 p-6"
     >
-      <h2 className="text-2xl font-bold mb-6">Saved Specifications</h2>
+      <h2 className="text-2xl font-bold mb-6 text-white">Saved Specifications</h2>
       
       {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex justify-center"
+          className="flex justify-center items-center h-32"
         >
-          <div className="loader">Loading...</div>
+          <div className="text-white">Loading...</div>
         </motion.div>
       )}
 
@@ -42,9 +57,9 @@ export const SavedSpecs: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 text-red-700 p-4 rounded"
+          className="bg-red-900/50 text-red-100 p-4 rounded mb-6"
         >
-          Failed to load saved specifications
+          {error}
         </motion.div>
       )}
 
@@ -57,21 +72,21 @@ export const SavedSpecs: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-lg shadow-lg p-6"
+              className="bg-white/10 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-white/20"
             >
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-white">
                 {spec.businessType} Specification
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-200 mb-4">
                 Platform: {spec.platformType}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-300">
                 Created: {new Date(spec.createdAt).toLocaleDateString()}
               </p>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
                 onClick={() => {/* Handle view spec */}}
               >
                 View Spec

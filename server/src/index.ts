@@ -20,45 +20,10 @@ app.get('/health', (req, res) => {
 app.post('/api/generate-spec', async (req, res) => {
   try {
     const formData = req.body;
-    
-    // Log received data
-    console.log('Received form data:', formData);
-    
-    // Validate input
-    if (!formData.businessType || 
-        !formData.platformTypes || 
-        !formData.deviceTypes || 
-        !formData.trackingTool ||
-        !formData.selectedEvents) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        receivedData: formData
-      });
-    }
-
-    // Additional array validation
-    if (!Array.isArray(formData.platformTypes) || formData.platformTypes.length === 0) {
-      return res.status(400).json({ error: 'Platform types must be a non-empty array' });
-    }
-
-    if (!Array.isArray(formData.deviceTypes) || formData.deviceTypes.length === 0) {
-      return res.status(400).json({ error: 'Device types must be a non-empty array' });
-    }
-
-    if (!Array.isArray(formData.selectedEvents) || formData.selectedEvents.length === 0) {
-      return res.status(400).json({ error: 'Selected events must be a non-empty array' });
-    }
-
-    // Generate specification using Claude
-    const specification = await generateSpecification(formData);
-
-    res.json({ specification });
+    await generateSpecification(formData, res);
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate specification',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('Error generating specification:', error);
+    res.status(500).json({ error: 'Failed to generate specification' });
   }
 });
 

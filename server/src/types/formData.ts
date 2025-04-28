@@ -1,6 +1,7 @@
 export interface FormData {
     businessType: string;
-    platformType: string;
-    deviceType: string;
+    platformTypes: string[];
+    deviceTypes: string[];
     trackingTool: string;
+    selectedEvents: string[];
 } 

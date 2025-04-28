@@ -202,6 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         
         try {
+            console.log('🟡 CLIENT: Starting specification generation');
+            
             const businessType = document.getElementById('businessType').value;
             const platformType = document.getElementById('platformType').value;
             const deviceType = document.getElementById('deviceType').value;
@@ -222,85 +224,97 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Generate the prompt
-            const prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers. The tracking is to be implemented using ${trackingTool}.
+            console.log('🟡 CLIENT: Form validation passed, preparing request');
+            console.log('🟡 CLIENT: Selected events:', selectedEvents);
 
-The specification should be customized for a ${businessType} business running on ${platformType} for ${deviceType}.
+            // Show loading indicator
+            loadingIndicator.style.display = 'flex';
+            outputText.textContent = '';
 
-🧩 For each of the following events, create a full section in the document. Do not skip or summarize any event. Every event in this list must have its own section in the output, even if the event seems similar to others:
+            // Create a container for the HTML content
+            const outputContainer = document.createElement('div');
+            outputContainer.className = 'spec-document';
+            outputText.appendChild(outputContainer);
 
-${selectedEvents.join(', ')}
-
-For each event, include the following:
-
-📌 Event Name
-
-📝 Clear description of what it captures
-
-📊 Event properties — required and optional (with example values)
-
-💻 Frontend implementation snippet — in JavaScript (for web) or relevant SDK for other platforms
-
-⚙️ Trigger instruction — when, where, and under what conditions the event should be triggered
-
-Organize the document so that each event and its code snippet appear together (side by side or one after the other).
-
-FORMATTING REQUIREMENTS:
-- Create properly formatted tables for event properties with clear columns for Property, Required/Optional, Type, Description, and Example Value
-- Format all code snippets using proper code blocks to ensure syntax highlighting and clear distinction from regular text
-- Ensure all code snippets can be easily copied without formatting issues
-- Use consistent heading levels throughout the document for clear hierarchy
-- Use proper spacing between sections for readability
-
-Additional specifications:
-
-🧑‍💻 User identity: Clarify how to handle anonymous, guest, and registered users
-
-🔐 Consent & privacy: Events should only fire if the user has opted-in per GDPR/CCPA; include conditional tracking logic
-
-🧪 Testing guide: Describe how to test and validate event capture using tools like Segment Debugger, browser console, or SDK logs
-
-📈 PM usage section: Describe how product managers can analyze this data for funnels, user segmentation, or conversion
-
-📚 Provide references: Link to SDK documentation, JS libraries, CDN links, and other relevant technical sources
-
-Write the document in a clear, professional tone — understandable by engineers and product managers alike. Prioritize clarity, structure, and practical implementation.`;
-
-            console.log('Sending prompt:', prompt); // Debug log
-
-            // Show loading state
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) loadingIndicator.style.display = 'block';
-
-            // Make the API call with the prompt
+            console.log('🟡 CLIENT: Making fetch request to server');
+            // Make a POST request with the form data
             const response = await fetch('/api/generate-spec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt }) // Send the formatted prompt instead of individual fields
+                body: JSON.stringify({
+                    businessType,
+                    platformType,
+                    deviceType,
+                    trackingTool,
+                    selectedEvents
+                })
             });
 
             // Check if the response is ok
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`API call failed: ${errorData.error || response.statusText}`);
+                throw new Error(`API call failed: ${response.statusText}`);
             }
 
-            const data = await response.json();
-            
-            // Update the output
-            const outputText = document.getElementById('outputText');
-            outputText.innerHTML = data.specification;
+            console.log('🟢 CLIENT: Server response received, setting up stream reader');
+
+            // Set up a reader for the response stream
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedText = '';
+            let chunkCount = 0;
+            let textChunkCount = 0;
+
+            // Process the stream
+            while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                    console.log('🟢 CLIENT: Stream complete');
+                    break;
+                }
+                
+                // Decode the chunk
+                const chunk = decoder.decode(value, { stream: true });
+                chunkCount++;
+                console.log(`🟢 CLIENT: Received chunk #${chunkCount}`);
+                
+                // Process each line in the chunk
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.substring(6); // Remove 'data: ' prefix
+                        
+                        if (dataStr === '[DONE]') {
+                            console.log('🟢 CLIENT: Received [DONE] signal from server');
+                            break;
+                        }
+                        
+                        try {
+                            const data = JSON.parse(dataStr);
+                            if (data.text) {
+                                textChunkCount++;
+                                console.log(`🟢 CLIENT: Processing text chunk #${textChunkCount}: "${data.text}"`);
+                                accumulatedText += data.text;
+                                outputContainer.innerHTML = accumulatedText;
+                            }
+                        } catch (error) {
+                            console.error('🔴 CLIENT: Error parsing event data:', error);
+                        }
+                    }
+                }
+            }
+
+            console.log(`🟢 CLIENT: Stream processing complete. Received ${chunkCount} chunks, processed ${textChunkCount} text chunks`);
+
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
 
         } catch (error) {
-            console.error('Error generating specification:', error);
-            const outputText = document.getElementById('outputText');
-            outputText.textContent = `Error: ${error.message}`;
-        } finally {
-            // Hide loading state
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            console.error('🔴 CLIENT: Error:', error);
+            loadingIndicator.style.display = 'none';
+            outputText.textContent = 'Error: Failed to generate specification. Please try again.';
         }
     }
 }); 
