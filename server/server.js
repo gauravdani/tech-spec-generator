@@ -127,13 +127,17 @@ REQUIREMENTS:
    - Required and optional properties with example values
    - Implementation code snippet
    - Trigger conditions
+   - Reporting Guidelines(in summary) on how to look up the event in the reporting tool
 3.User Identity Handling (anonymous vs registered)
 4.Consent & Privacy Safeguards (GDPR/CCPA-compliant)
 5.Testing Guidelines (how to verify events)
 6.Product Manager Usage Section (reporting/funnel examples)
 7.Documentation Links to SDKs or tools
 8.Ensure code and explanation for each event appear together.
-
+9.Add an introduction section to the document that explains the purpose of the document and the importance of privacy and data protection.
+10. Directly begin with the document with the title followed by the introduction, "Here is the event tracking specification document in HTML format, based on the provided context and requirements" is not required.
+11. After introduction, add a section with title Dependencies and list all the dependencies , related to SDKs required for the events. This section explains the steps the engineer has to take before tracking begins.Provide any download or install guidelines
+12. Add a section with title mandatory properties and list all the mandatory properties, device_type(tv, mobile, desktop, console, set-top-box, etc), device_manufacturer(manufacturer of device), device_model(actual model of device), device_platform(ios, android, web, etc), user_type(anonymous, registered) as properties for all events.
 
 FORMAT:
 Return the content in clean HTML using ONLY these tags:

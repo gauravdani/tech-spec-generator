@@ -14,6 +14,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [specContent, setSpecContent] = useState<string>('');
+  const [copySuccess, setCopySuccess] = useState<string>('');
   const outputRef = useRef<HTMLDivElement>(null);
 
   // Clear selected events when business type changes
@@ -81,6 +82,21 @@ function App() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (outputRef.current) {
+      const textToCopy = outputRef.current.innerText;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          setCopySuccess('Copied!');
+          setTimeout(() => setCopySuccess(''), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+          setCopySuccess('Failed to copy');
+        });
     }
   };
 
@@ -235,6 +251,18 @@ function App() {
             <div className="flex-[0.8] content-container mb-4 overflow-hidden flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Generated Specification</h2>
+                {specContent && (
+                  <button
+                    onClick={copyToClipboard}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    {copySuccess || 'Copy to Clipboard'}
+                  </button>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                 <div className="absolute inset-0">
