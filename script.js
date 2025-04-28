@@ -214,31 +214,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(checkbox => checkbox.value);
 
             // Validate inputs
-            if (!businessType || !platformType || !deviceType || !trackingTool) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            if (selectedEvents.length === 0) {
-                alert('Please select at least one event to track');
+            if (!businessType || !platformType || !deviceType || !trackingTool || selectedEvents.length === 0) {
+                alert('Please fill in all fields and select at least one event');
                 return;
             }
 
             console.log('🟡 CLIENT: Form validation passed, preparing request');
             console.log('🟡 CLIENT: Selected events:', selectedEvents);
 
-            // Show loading indicator
-            loadingIndicator.style.display = 'flex';
-            outputText.textContent = '';
-
-            // Create a container for the HTML content
-            const outputContainer = document.createElement('div');
-            outputContainer.className = 'spec-document';
-            outputText.appendChild(outputContainer);
-
+            // Get the output elements
+            const outputSection = document.getElementById('outputSection');
+            const outputText = document.getElementById('outputText');
+            
+            // Show loading state
+            outputText.innerHTML = '<div class="loading">Generating specification...</div>';
+            outputSection.style.display = 'block';
+            
             console.log('🟡 CLIENT: Making fetch request to server');
             // Make a POST request with the form data
-            const response = await fetch('/api/generate-spec', {
+            const response = await fetch('http://localhost:3000/api/generate-spec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -259,16 +253,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log('🟢 CLIENT: Server response received, setting up stream reader');
 
-            // Set up a reader for the response stream
+            // Get the reader from the response body stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let accumulatedText = '';
-            let chunkCount = 0;
-            let textChunkCount = 0;
-
+            
+            // Clear the output container before starting
+            outputText.innerHTML = '';
+            
             // Process the stream
             while (true) {
-                const { done, value } = await reader.read();
+                const { value, done } = await reader.read();
                 
                 if (done) {
                     console.log('🟢 CLIENT: Stream complete');
@@ -276,45 +270,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Decode the chunk
-                const chunk = decoder.decode(value, { stream: true });
-                chunkCount++;
-                console.log(`🟢 CLIENT: Received chunk #${chunkCount}`);
+                const chunk = decoder.decode(value);
+                console.log(`🟡 CLIENT: Received chunk: ${chunk.substring(0, 100)}...`);
                 
-                // Process each line in the chunk
+                // Split the chunk into lines
                 const lines = chunk.split('\n');
+                
+                // Process each line
                 for (const line of lines) {
+                    // Skip empty lines
+                    if (!line.trim()) continue;
+                    
+                    // Check if this is a data line
                     if (line.startsWith('data: ')) {
-                        const dataStr = line.substring(6); // Remove 'data: ' prefix
-                        
-                        if (dataStr === '[DONE]') {
-                            console.log('🟢 CLIENT: Received [DONE] signal from server');
-                            break;
-                        }
-                        
                         try {
-                            const data = JSON.parse(dataStr);
-                            if (data.text) {
-                                textChunkCount++;
-                                console.log(`🟢 CLIENT: Processing text chunk #${textChunkCount}: "${data.text}"`);
-                                accumulatedText += data.text;
-                                outputContainer.innerHTML = accumulatedText;
+                            const jsonStr = line.substring(6); // Remove 'data: ' prefix
+                            
+                            // Check if this is the end marker
+                            if (jsonStr === '[DONE]') {
+                                console.log('🟢 CLIENT: Received end marker');
+                                continue;
+                            }
+                            
+                            const data = JSON.parse(jsonStr);
+                            console.log('🟡 CLIENT: Parsed data:', data);
+                            
+                            // Handle the Claude API response format
+                            if (data.delta && data.delta.text) {
+                                // Append the text to the output container
+                                outputText.innerHTML += data.delta.text;
+                                
+                                // Log the text being added for debugging
+                                console.log(`🟢 CLIENT: Added text: "${data.delta.text}"`);
+                                
+                                // Scroll to the bottom of the output container
+                                outputText.scrollTop = outputText.scrollHeight;
                             }
                         } catch (error) {
-                            console.error('🔴 CLIENT: Error parsing event data:', error);
+                            console.error('🔴 CLIENT: Error processing chunk:', error);
+                            console.error('🔴 CLIENT: Problematic line:', line);
                         }
                     }
                 }
             }
-
-            console.log(`🟢 CLIENT: Stream processing complete. Received ${chunkCount} chunks, processed ${textChunkCount} text chunks`);
-
-            // Hide loading indicator
-            loadingIndicator.style.display = 'none';
-
+            
+            // Enable the copy button after generation is complete
+            const copyButton = document.getElementById('copyButton');
+            if (copyButton) {
+                copyButton.disabled = false;
+            }
+            
         } catch (error) {
-            console.error('🔴 CLIENT: Error:', error);
-            loadingIndicator.style.display = 'none';
-            outputText.textContent = 'Error: Failed to generate specification. Please try again.';
+            console.error('🔴 CLIENT: Error generating specification:', error);
+            const outputText = document.getElementById('outputText');
+            outputText.innerHTML = `<div class="error">Error generating specification: ${error.message}</div>`;
         }
     }
 }); 

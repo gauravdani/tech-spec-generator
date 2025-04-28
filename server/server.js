@@ -2,10 +2,11 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const fs = require('fs');
-require('dotenv').config();
+const cors = require('cors');
+const config = require('./config');
 
 // Ensure logs directory exists
-const LOG_DIR = path.join(__dirname, 'logs');
+const LOG_DIR = path.join(__dirname, config.logDir);
 if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
 }
@@ -21,9 +22,13 @@ function logToFile(filename, data) {
 }
 
 const app = express();
-const port = process.env.PORT || 3000;
 
 // Middleware setup
+app.use(cors({
+  origin: config.clientUrl,
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -53,8 +58,8 @@ async function testClaudeAPI() {
     try {
         console.log('Testing Claude API access...');
         logToFile('server.log', 'Testing Claude API access...');
-        console.log('API Key present:', process.env.ANTHROPIC_API_KEY ? '✓' : '✗');
-        logToFile('server.log', `API Key present: ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗'}`);
+        console.log('API Key present:', config.anthropicApiKey ? '✓' : '✗');
+        logToFile('server.log', `API Key present: ${config.anthropicApiKey ? '✓' : '✗'}`);
         
         const response = await axios.post(
             'https://api.anthropic.com/v1/messages',
@@ -69,7 +74,7 @@ async function testClaudeAPI() {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': process.env.ANTHROPIC_API_KEY,
+                    'x-api-key': config.anthropicApiKey,
                     'anthropic-version': '2023-06-01'
                 }
             }
@@ -162,69 +167,88 @@ Write the document in a clear, professional tone — understandable by engineers
         res.setHeader('Connection', 'keep-alive');
 
         console.log('🟡 SERVER: Making request to Claude API');
-        const response = await axios.post(
-            'https://api.anthropic.com/v1/messages',
-            {
-                model: "claude-3-opus-20240229",
-                max_tokens: 4000,
-                messages: [{
-                    role: "user",
-                    content: prompt
-                }]
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': process.env.ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01'
+        try {
+            const response = await axios.post(
+                'https://api.anthropic.com/v1/messages',
+                {
+                    model: "claude-3-opus-20240229",
+                    max_tokens: 4000,
+                    stream: true,
+                    messages: [{
+                        role: "user",
+                        content: prompt
+                    }]
                 },
-                responseType: 'stream'
-            }
-        );
-
-        console.log('🟢 SERVER: Claude API request successful, setting up stream handlers');
-
-        // Handle the streaming response
-        response.data.on('data', chunk => {
-            const chunkStr = chunk.toString();
-            
-            // Split the chunk into lines
-            const lines = chunkStr.split('\n');
-            
-            // Process each line
-            for (const line of lines) {
-                // Skip empty lines
-                if (!line.trim()) continue;
-                
-                // Check if this is a data line
-                if (line.startsWith('data: ')) {
-                    try {
-                        const jsonStr = line.substring(6); // Remove 'data: ' prefix
-                        const data = JSON.parse(jsonStr);
-                        
-                        // Only process if we have text content
-                        if (data.delta && data.delta.text) {
-                            // Send just the text content to the client
-                            res.write(`data: ${data.delta.text}\n\n`);
-                        }
-                    } catch (error) {
-                        console.error('🔴 SERVER: Error parsing JSON:', error);
-                    }
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': config.anthropicApiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    responseType: 'stream'
                 }
+            );
+
+            console.log('🟢 SERVER: Claude API request successful, setting up stream handlers');
+
+            // Handle the streaming response
+            response.data.on('data', chunk => {
+                const chunkStr = chunk.toString();
+                console.log('🟡 SERVER: Raw chunk received:', chunkStr);
+                
+                try {
+                    // Parse SSE format
+                    const lines = chunkStr.split('\n');
+                    let eventType = '';
+                    let data = null;
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            eventType = line.slice(7);
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                data = JSON.parse(line.slice(6));
+                            } catch (e) {
+                                console.log('🟡 SERVER: Skipping non-JSON data line');
+                                continue;
+                            }
+                        }
+                    }
+
+                    // Process the parsed data
+                    if (data && data.type === 'content_block_delta' && data.delta && data.delta.text) {
+                        console.log('🟢 SERVER: Found text content, length:', data.delta.text.length);
+                        
+                        // Stream the text content to the client
+                        const sseData = `data: ${JSON.stringify({ text: data.delta.text })}\n\n`;
+                        res.write(sseData);
+                    }
+                } catch (error) {
+                    console.error('🔴 SERVER: Error processing chunk:', error);
+                    console.error('🔴 SERVER: Problematic chunk:', chunkStr);
+                }
+            });
+
+            response.data.on('end', () => {
+                console.log('🟢 SERVER: Stream ended');
+                res.end();
+            });
+
+            response.data.on('error', (error) => {
+                console.error('🔴 SERVER: Stream error:', error);
+                res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+                res.end();
+            });
+        } catch (error) {
+            console.error('🔴 SERVER: Error making Claude API request:', error);
+            if (error.response) {
+                console.error('🔴 SERVER: Claude API error response:', {
+                    status: error.response.status,
+                    data: error.response.data
+                });
             }
-        });
-
-        response.data.on('end', () => {
-            console.log(`🟢 SERVER: Stream ended. Received ${chunkCount} chunks, sent ${textChunkCount} text chunks`);
-            res.write('data: [DONE]\n\n');
-            res.end();
-        });
-
-        response.data.on('error', (error) => {
-            console.error('🔴 SERVER: Stream error:', error);
-            res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
-            res.end();
-        });
+            res.status(500).json({ error: 'Failed to connect to Claude API' });
+        }
 
     } catch (error) {
         console.error('🔴 SERVER: Error in /api/generate-spec:', error);
@@ -232,9 +256,9 @@ Write the document in a clear, professional tone — understandable by engineers
     }
 });
 
-// Start the server and test Claude API
-app.listen(port, async () => {
-    console.log(`Server is running on port ${port}`);
-    logToFile('server.log', `Server is running on port ${port}`);
+// Start the server
+app.listen(config.port, async () => {
+    console.log(`Server is running on port ${config.port}`);
+    logToFile('server.log', `Server is running on port ${config.port}`);
     await testClaudeAPI();
 }); 

@@ -31,9 +31,10 @@ function App() {
 
     setError(null);
     setIsLoading(true);
-    setResult(null);
+    setResult('');
 
     try {
+      console.log('🌐 CLIENT: Making request to server...');
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GENERATE_SPEC}`, {
         method: 'POST',
         headers: {
@@ -49,9 +50,57 @@ function App() {
         throw new Error('Failed to generate specification');
       }
 
-      const data = await response.json();
-      setResult(data.specification);
+      console.log('🌐 CLIENT: Got response, starting to read stream...');
+      
+      // Create a new TextDecoder for decoding the stream
+      const decoder = new TextDecoder();
+      const reader = response.body?.getReader();
+
+      if (!reader) {
+        throw new Error('Failed to get response reader');
+      }
+
+      // Process the stream
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          console.log('🌐 CLIENT: Stream complete');
+          break;
+        }
+
+        // Decode the chunk and split into lines
+        const chunk = decoder.decode(value);
+        console.log('🌐 CLIENT: Received chunk:', chunk);
+        
+        const lines = chunk.split('\n');
+        console.log('🌐 CLIENT: Number of lines:', lines.length);
+
+        // Process each line
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const jsonStr = line.slice(6);
+              console.log('🌐 CLIENT: Parsing JSON:', jsonStr);
+              const data = JSON.parse(jsonStr);
+              console.log('🌐 CLIENT: Parsed data:', data);
+              
+              if (data.text) {
+                console.log('🌐 CLIENT: Updating result with text:', data.text);
+                setResult(prev => {
+                  const newResult = (prev || '') + data.text;
+                  console.log('🌐 CLIENT: New result length:', newResult.length);
+                  return newResult;
+                });
+              }
+            } catch (err) {
+              console.error('🌐 CLIENT: Error parsing SSE data:', err);
+            }
+          }
+        }
+      }
     } catch (err) {
+      console.error('🌐 CLIENT: Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred while generating the specification');
     } finally {
       setIsLoading(false);
