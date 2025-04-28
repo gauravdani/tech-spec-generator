@@ -1,0 +1,155 @@
+.specification {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  overflow-x: auto;
+}
+
+.specification pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  font-family: monospace;
+}
+
+.specification-content {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  min-height: 100px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.specification-content h1,
+.specification-content h2,
+.specification-content h3,
+.specification-content h4 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.specification-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.specification-content th,
+.specification-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.specification-content pre {
+  background-color: #f5f5f5;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.loading {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.error {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+  color: #c62828;
+}
+
+.debug-info {
+  margin: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+/* Make sure the content is visible */
+.specification-content * {
+  margin: 8px 0;
+}
+
+.flex-grow {
+  position: relative;
+  min-height: 400px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  margin-top: 1rem;
+}
+
+.loading {
+  padding: 1rem;
+  background-color: #e3f2fd;
+  border-radius: 0.375rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error {
+  padding: 1rem;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 0.375rem;
+  color: #c62828;
+  margin: 1rem;
+}
+
+/* Style the content */
+.flex-grow > div {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.flex-grow h1,
+.flex-grow h2,
+.flex-grow h3,
+.flex-grow h4 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.flex-grow table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.flex-grow th,
+.flex-grow td {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.flex-grow th {
+  background-color: #f9fafb;
+}
+
+.flex-grow pre {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.flex-grow code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+} 

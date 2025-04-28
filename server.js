@@ -1,7 +1,24 @@
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
+const fs = require('fs');
 require('dotenv').config();
+
+// Ensure logs directory exists
+const LOG_DIR = path.join(__dirname, 'logs');
+if (!fs.existsSync(LOG_DIR)) {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+
+// Logging utility
+function logToFile(filename, data) {
+  const filePath = path.join(LOG_DIR, filename);
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${data}\n`;
+  
+  fs.appendFileSync(filePath, logEntry, 'utf8');
+  console.log(`Logged to ${filename}: ${data.substring(0, 100)}${data.length > 100 ? '...' : ''}`);
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,11 +27,34 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Log request
+  logToFile('requests.log', `REQUEST: ${req.method} ${req.url}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    logToFile('requests.log', `REQUEST BODY: ${JSON.stringify(req.body)}`);
+  }
+  
+  // Capture response
+  const originalSend = res.send;
+  res.send = function(body) {
+    const duration = Date.now() - start;
+    logToFile('responses.log', `RESPONSE: ${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
+
 // Test Claude API access on server start
 async function testClaudeAPI() {
     try {
         console.log('Testing Claude API access...');
+        logToFile('server.log', 'Testing Claude API access...');
         console.log('API Key present:', process.env.ANTHROPIC_API_KEY ? '✓' : '✗');
+        logToFile('server.log', `API Key present: ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗'}`);
         
         const response = await axios.post(
             'https://api.anthropic.com/v1/messages',
@@ -35,6 +75,7 @@ async function testClaudeAPI() {
             }
         );
         console.log('✅ Claude API access verified successfully!');
+        logToFile('server.log', '✅ Claude API access verified successfully!');
     } catch (error) {
         console.error('\n❌ Claude API test failed:');
         console.error('Status:', error.response?.status);
@@ -43,21 +84,25 @@ async function testClaudeAPI() {
         console.error('1. Check if ANTHROPIC_API_KEY is set in your .env file');
         console.error('2. Verify your API key is valid');
         console.error('3. Check your network connection\n');
+        
+        logToFile('errors.log', `❌ Claude API test failed: Status: ${error.response?.status}, Error: ${JSON.stringify(error.response?.data || error.message)}`);
     }
 }
 
 // Main endpoint for generating specifications
 app.post('/api/generate-spec', async (req, res) => {
     try {
-        console.log('Received request body:', req.body);
+        console.log('🟡 SERVER: Starting /api/generate-spec endpoint');
         
         // Get prompt either directly or generate it from form data
         let prompt;
         if (req.body.prompt) {
             prompt = req.body.prompt;
+            console.log('🟡 SERVER: Using provided prompt');
         } else if (req.body.businessType) {
             // Generate prompt from form data
             const { businessType, platformType, deviceType, trackingTool, selectedEvents } = req.body;
+            console.log('🟡 SERVER: Generating prompt from form data');
             
             prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers. The tracking is to be implemented using ${trackingTool}.
 
@@ -104,11 +149,19 @@ Write the document in a clear, professional tone — understandable by engineers
         }
 
         if (!prompt) {
+            console.log('🔴 SERVER: Invalid request format - No prompt or business type provided');
             return res.status(400).json({ error: 'Invalid request format' });
         }
 
-        console.log('Generated/Received prompt:', prompt.substring(0, 100) + '...');
+        console.log('🟡 SERVER: Generated/Received prompt:', prompt.substring(0, 100) + '...');
 
+        // Set headers for streaming
+        console.log('🟡 SERVER: Setting up SSE headers');
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        console.log('🟡 SERVER: Making request to Claude API');
         const response = await axios.post(
             'https://api.anthropic.com/v1/messages',
             {
@@ -124,101 +177,64 @@ Write the document in a clear, professional tone — understandable by engineers
                     'Content-Type': 'application/json',
                     'x-api-key': process.env.ANTHROPIC_API_KEY,
                     'anthropic-version': '2023-06-01'
-                }
+                },
+                responseType: 'stream'
             }
         );
 
-        console.log('Claude API call successful');
-        
-        // Add CSS to style the response
-        const cssStyles = `
-        <style>
-        .spec-document {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
+        console.log('🟢 SERVER: Claude API request successful, setting up stream handlers');
 
-        .event-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-radius: 6px;
-            overflow: hidden;
-        }
+        // Handle the streaming response
+        response.data.on('data', chunk => {
+            const chunkStr = chunk.toString();
+            
+            // Split the chunk into lines
+            const lines = chunkStr.split('\n');
+            
+            // Process each line
+            for (const line of lines) {
+                // Skip empty lines
+                if (!line.trim()) continue;
+                
+                // Check if this is a data line
+                if (line.startsWith('data: ')) {
+                    try {
+                        const jsonStr = line.substring(6); // Remove 'data: ' prefix
+                        const data = JSON.parse(jsonStr);
+                        
+                        // Only process if we have text content
+                        if (data.delta && data.delta.text) {
+                            // Send just the text content to the client
+                            res.write(`data: ${data.delta.text}\n\n`);
+                        }
+                    } catch (error) {
+                        console.error('🔴 SERVER: Error parsing JSON:', error);
+                    }
+                }
+            }
+        });
 
-        .event-table th {
-            background: #2563eb;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
+        response.data.on('end', () => {
+            console.log(`🟢 SERVER: Stream ended. Received ${chunkCount} chunks, sent ${textChunkCount} text chunks`);
+            res.write('data: [DONE]\n\n');
+            res.end();
+        });
 
-        .event-table td {
-            padding: 12px;
-            border-top: 1px solid #e5e7eb;
-        }
+        response.data.on('error', (error) => {
+            console.error('🔴 SERVER: Stream error:', error);
+            res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+            res.end();
+        });
 
-        .event-table tr:nth-child(even) {
-            background: #f8fafc;
-        }
-
-        pre code {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 1rem;
-            border-radius: 6px;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.9rem;
-            overflow-x: auto;
-            display: block;
-            margin: 1rem 0;
-            position: relative;
-            white-space: pre-wrap;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            color: #2563eb;
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-        }
-
-        h1 { font-size: 2.5rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
-        h2 { font-size: 2rem; }
-        h3 { font-size: 1.5rem; }
-
-        p { margin: 1rem 0; }
-
-        ul, ol {
-            padding-left: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        li { margin: 0.5rem 0; }
-        </style>`;
-
-        // Wrap the response in a div and add CSS
-        const formattedResponse = `
-            ${cssStyles}
-            <div class="spec-document">
-                ${response.data.content[0].text}
-            </div>`;
-        
-        res.json({ specification: formattedResponse });
     } catch (error) {
-        console.error('Error in /api/generate-spec:', error);
-        console.error('API Key present:', !!process.env.ANTHROPIC_API_KEY);
-        res.status(500).json({ error: error.message });
+        console.error('🔴 SERVER: Error in /api/generate-spec:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 // Start the server and test Claude API
 app.listen(port, async () => {
     console.log(`Server is running on port ${port}`);
+    logToFile('server.log', `Server is running on port ${port}`);
     await testClaudeAPI();
 }); 
