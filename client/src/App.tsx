@@ -86,14 +86,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 p-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1440px] mx-auto">
         <h1 className="text-4xl font-bold text-center text-white mb-6">
           TrackForge AI
         </h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Column - Form */}
-          <div className="lg:col-span-4 bg-white rounded-lg shadow-lg p-4">
+          <div className="lg:col-span-3 bg-white rounded-lg shadow-lg p-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Generate Specification</h2>
             
             <form onSubmit={handleSubmit}>
@@ -230,39 +230,45 @@ function App() {
           </div>
           
           {/* Right Column - Output */}
-          <div className="lg:col-span-8 flex flex-col h-[calc(100vh-8rem)]">
+          <div className="lg:col-span-9 flex flex-col h-[calc(100vh-8rem)]">
             {/* Top Row - 80% height */}
-            <div className="flex-[0.8] bg-white rounded-lg shadow-lg p-4 mb-4 overflow-hidden flex flex-col">
-              <div className="flex justify-between items-center mb-2">
+            <div className="flex-[0.8] content-container mb-4 overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Generated Specification</h2>
               </div>
-              <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-4 custom-scrollbar">
-                {error ? (
-                  <div className="text-red-500 text-center h-full flex items-center justify-center">
-                    <p>{error}</p>
-                  </div>
-                ) : (
-                  <div 
-                    ref={outputRef}
-                    className="markdown-content"
-                    dangerouslySetInnerHTML={{ __html: specContent }}
-                  />
-                )}
-                {isLoading && !specContent && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
+              <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+                <div className="absolute inset-0">
+                  {error ? (
+                    <div className="error-message">
+                      <p>{error}</p>
+                    </div>
+                  ) : (
+                    <div className="p-4 h-full">
+                      <div 
+                        ref={outputRef}
+                        className="markdown-content"
+                        dangerouslySetInnerHTML={{ __html: specContent }}
+                      />
+                    </div>
+                  )}
+                  {isLoading && !specContent && (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
             {/* Bottom Row - 20% height */}
-            <div className="flex-[0.2] bg-white rounded-lg shadow-lg p-4 overflow-hidden flex flex-col">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Additional Information</h2>
-              <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-3 custom-scrollbar">
-                <p className="text-gray-700">
-                  This section can contain additional details, notes, or related information about your generated specification.
-                </p>
+            <div className="flex-[0.2] content-container overflow-hidden flex flex-col">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Additional Information</h2>
+              <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+                <div className="absolute inset-0 p-4">
+                  <p className="text-gray-700">
+                    This section can contain additional details, notes, or related information about your generated specification.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

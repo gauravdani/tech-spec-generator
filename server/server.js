@@ -109,55 +109,50 @@ app.post('/api/generate-spec', async (req, res) => {
             const { businessType, platformType, deviceType, trackingTool, selectedEvents } = req.body;
             console.log('🟡 SERVER: Generating prompt from form data');
             
-            prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers. The tracking is to be implemented using ${trackingTool}.
+            prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers.
+it should take into account only the below CONTEXT and REQUIREMENTS and FORMAT.
 
-The specification should be customized for a ${businessType} business running on ${platformType} for ${deviceType}.
+CONTEXT:
+- Business Type: ${businessType}
+- Platform Type: ${platformType}
+- Device Type: ${deviceType}
+- Tracking Tool: ${trackingTool}
+- Events to Track: ${selectedEvents.join(', ')}
 
-🧩 For each of the following events, create a full section in the document. Do not skip or summarize any event. Every event in this list must have its own section in the output, even if the event seems similar to others:
+REQUIREMENTS:
+1. Generate ONLY the technical specification for the above events
+2. Each event must include:
+   - Event name
+   - Description
+   - Required and optional properties with example values
+   - Implementation code snippet
+   - Trigger conditions
+3.User Identity Handling (anonymous vs registered)
+4.Consent & Privacy Safeguards (GDPR/CCPA-compliant)
+5.Testing Guidelines (how to verify events)
+6.Product Manager Usage Section (reporting/funnel examples)
+7.Documentation Links to SDKs or tools
+8.Ensure code and explanation for each event appear together.
 
-${selectedEvents.join(', ')}
 
-For each event, include the following:
+FORMAT:
+Return the content in clean HTML using ONLY these tags:
+- <h1> through <h4> for headings
+- <p> for paragraphs
+- <table> with <thead> and <tbody> for properties
+- <pre><code> for code snippets
+- <ul> and <ol> for lists
+- <blockquote> for important notes
+- <a> for links
+- <strong> and <em> for emphasis
 
-📌 Event Name
-
-📝 Clear description of what it captures
-
-📊 Event properties — required and optional (with example values)
-
-💻 Frontend implementation snippet — in JavaScript (for web) or relevant SDK for other platforms
-
-⚙️ Trigger instruction — when, where, and under what conditions the event should be triggered
-
-Organize the document so that each event and its code snippet appear together.
-
-FORMATTING REQUIREMENTS:
-- Return the content in clean HTML format using semantic tags
-- Use <h1> through <h4> for headings with appropriate hierarchy
-- Use <table> with <thead> and <tbody> for event properties
-- Use <pre><code> for code snippets
-- Use <ul> and <ol> for lists
-- Use <blockquote> for important notes or warnings
-- Use <a> for links with proper href attributes
-- Use <strong> and <em> for emphasis
+IMPORTANT:
 - DO NOT include any inline styles or CSS classes
 - DO NOT include any markdown formatting
-
-Additional specifications:
-
-🧑‍💻 User identity: Clarify how to handle anonymous, guest, and registered users
-
-🔐 Consent & privacy: Events should only fire if the user has opted-in per GDPR/CCPA; include conditional tracking logic
-
-🧪 Testing guide: Describe how to test and validate event capture using tools like Segment Debugger, browser console, or SDK logs
-
-📈 PM usage section: Describe how product managers can analyze this data for funnels, user segmentation, or conversion
-
-📚 Provide references: Link to SDK documentation, JS libraries, CDN links, and other relevant technical sources
-
-Write the document in a clear, professional tone — understandable by engineers and product managers alike. Prioritize clarity, structure, and practical implementation.
-
-IMPORTANT: Return the content in valid HTML format without any inline styles or CSS classes.`;
+- DO NOT include any content outside the scope of the specified events
+- DO NOT include any general information or context
+- DO NOT include any previous conversation context
+- Focus ONLY on the technical implementation details for the specified events`;
         }
 
         if (!prompt) {
