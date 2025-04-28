@@ -214,31 +214,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(checkbox => checkbox.value);
 
             // Validate inputs
-            if (!businessType || !platformType || !deviceType || !trackingTool) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            if (selectedEvents.length === 0) {
-                alert('Please select at least one event to track');
+            if (!businessType || !platformType || !deviceType || !trackingTool || selectedEvents.length === 0) {
+                alert('Please fill in all fields and select at least one event');
                 return;
             }
 
             console.log('🟡 CLIENT: Form validation passed, preparing request');
             console.log('🟡 CLIENT: Selected events:', selectedEvents);
 
+            // Get the output elements
+            const outputSection = document.getElementById('outputSection');
+            const outputText = document.getElementById('outputText');
+            
+            // Clear the output text and show the section
+            outputText.innerHTML = '';
+            outputSection.style.display = 'block';
+            
             // Show loading indicator
             loadingIndicator.style.display = 'flex';
-            outputText.textContent = '';
-
-            // Create a container for the HTML content
-            const outputContainer = document.createElement('div');
-            outputContainer.className = 'spec-document';
-            outputText.appendChild(outputContainer);
-
+            
             console.log('🟡 CLIENT: Making fetch request to server');
             // Make a POST request with the form data
-            const response = await fetch('/api/generate-spec', {
+            const response = await fetch('http://localhost:3000/api/generate-spec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -254,18 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Check if the response is ok
             if (!response.ok) {
-                throw new Error(`API call failed: ${response.statusText}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            console.log('🟢 CLIENT: Server response received, setting up stream reader');
-
-            // Set up a reader for the response stream
+            // Check if the response is a stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let accumulatedText = '';
-            let chunkCount = 0;
-            let textChunkCount = 0;
-
+            let result = '';
+            
             // Process the stream
             while (true) {
                 const { done, value } = await reader.read();
@@ -277,44 +270,86 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Decode the chunk
                 const chunk = decoder.decode(value, { stream: true });
-                chunkCount++;
-                console.log(`🟢 CLIENT: Received chunk #${chunkCount}`);
+                console.log('🟡 CLIENT: Received chunk:', chunk);
                 
                 // Process each line in the chunk
                 const lines = chunk.split('\n');
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
-                        const dataStr = line.substring(6); // Remove 'data: ' prefix
-                        
-                        if (dataStr === '[DONE]') {
-                            console.log('🟢 CLIENT: Received [DONE] signal from server');
-                            break;
-                        }
-                        
                         try {
-                            const data = JSON.parse(dataStr);
+                            const data = JSON.parse(line.substring(6));
                             if (data.text) {
-                                textChunkCount++;
-                                console.log(`🟢 CLIENT: Processing text chunk #${textChunkCount}: "${data.text}"`);
-                                accumulatedText += data.text;
-                                outputContainer.innerHTML = accumulatedText;
+                                result += data.text;
+                                // Convert markdown to HTML
+                                const htmlContent = convertMarkdownToHtml(result);
+                                outputText.innerHTML = htmlContent;
+                                console.log('🟢 CLIENT: Updated output with new text');
                             }
-                        } catch (error) {
-                            console.error('🔴 CLIENT: Error parsing event data:', error);
+                        } catch (e) {
+                            console.error('🔴 CLIENT: Error parsing JSON:', e);
                         }
                     }
                 }
             }
-
-            console.log(`🟢 CLIENT: Stream processing complete. Received ${chunkCount} chunks, processed ${textChunkCount} text chunks`);
-
+            
             // Hide loading indicator
             loadingIndicator.style.display = 'none';
-
+            
+            console.log('🟢 CLIENT: Specification generation complete');
         } catch (error) {
-            console.error('🔴 CLIENT: Error:', error);
+            console.error('🔴 CLIENT: Error generating specification:', error);
+            outputText.innerHTML = `<div class="error">Error generating specification: ${error.message}</div>`;
             loadingIndicator.style.display = 'none';
-            outputText.textContent = 'Error: Failed to generate specification. Please try again.';
         }
+    }
+
+    // Function to convert markdown to HTML
+    function convertMarkdownToHtml(markdown) {
+        // Simple markdown conversion
+        let html = markdown
+            // Headers
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+            
+            // Bold and italic
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+            
+            // Code blocks
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            
+            // Lists
+            .replace(/^\s*\*\s(.*$)/gm, '<li>$1</li>')
+            .replace(/^\s*\d+\.\s(.*$)/gm, '<li>$1</li>')
+            
+            // Tables
+            .replace(/\|([^\n]*)\|/g, function(match) {
+                const cells = match.split('|').filter(cell => cell.trim() !== '');
+                return '<tr>' + cells.map(cell => `<td>${cell.trim()}</td>`).join('') + '</tr>';
+            })
+            
+            // Paragraphs
+            .replace(/\n\n/g, '</p><p>');
+        
+        // Wrap lists
+        html = html.replace(/<li>.*?<\/li>/g, function(match) {
+            return '<ul>' + match + '</ul>';
+        });
+        
+        // Wrap tables
+        html = html.replace(/<tr>.*?<\/tr>/g, function(match) {
+            return '<table>' + match + '</table>';
+        });
+        
+        // Wrap paragraphs
+        html = '<p>' + html + '</p>';
+        
+        return html;
     }
 }); 

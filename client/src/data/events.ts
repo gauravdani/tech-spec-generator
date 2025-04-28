@@ -10,8 +10,61 @@ export interface Event {
   description: string;
 }
 
+export const genericEvents: EventCategory[] = [
+  {
+    id: 'app_lifecycle',
+    name: 'App Lifecycle',
+    events: [
+      { id: 'app_opened', name: 'App Opened', description: 'When the application is launched or brought to foreground' },
+      { id: 'app_closed', name: 'App Closed', description: 'When the application is closed or sent to background' },
+      { id: 'page_viewed', name: 'Page Viewed', description: 'When a user views any page in the application' },
+      { id: 'deep_link_clicked', name: 'Deep Link Clicked', description: 'When a user clicks on a deep link to the application' }
+    ]
+  },
+  {
+    id: 'user_interactions',
+    name: 'User Interactions',
+    events: [
+      { id: 'cta_clicked', name: 'CTA Clicked', description: 'When a user clicks on any call-to-action button' },
+      { id: 'feedback_submitted', name: 'Feedback Submitted', description: 'When a user submits feedback or ratings' }
+    ]
+  },
+  {
+    id: 'notifications',
+    name: 'Notifications',
+    events: [
+      { id: 'notification_received', name: 'Notification Received', description: 'When a push notification is received' },
+      { id: 'notification_clicked', name: 'Notification Clicked', description: 'When a user clicks on a notification' }
+    ]
+  },
+  {
+    id: 'permissions',
+    name: 'Permissions & Settings',
+    events: [
+      { id: 'consent_given', name: 'Consent Given', description: 'When a user gives consent for data collection or processing' },
+      { id: 'consent_withdrawn', name: 'Consent Withdrawn', description: 'When a user withdraws their consent' },
+      { id: 'language_selected', name: 'Language Selected', description: 'When a user changes the application language' },
+      { id: 'dark_mode_toggled', name: 'Dark Mode Toggled', description: 'When a user toggles dark/light mode' },
+      { id: 'location_permission_granted', name: 'Location Permission Granted', description: 'When a user grants location access' }
+    ]
+  },
+  {
+    id: 'system',
+    name: 'System Events',
+    events: [
+      { id: 'device_info_captured', name: 'Device Info Captured', description: 'When device information is collected' },
+      { id: 'crash_detected', name: 'Crash Detected', description: 'When an application crash is detected' }
+    ]
+  }
+];
+
+// Helper function to combine business-specific and generic events
+const combineEvents = (businessEvents: EventCategory[]): EventCategory[] => {
+  return [...businessEvents, ...genericEvents];
+};
+
 export const eventsByBusinessType: Record<string, EventCategory[]> = {
-  eCommerce: [
+  eCommerce: combineEvents([
     {
       id: 'product',
       name: 'Product Interactions',
@@ -55,8 +108,8 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'refund_processed', name: 'Refund Processed', description: 'When a refund is processed' }
       ]
     }
-  ],
-  OTT: [
+  ]),
+  OTT: combineEvents([
     {
       id: 'streaming',
       name: 'Streaming Events',
@@ -78,8 +131,8 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'audio_changed', name: 'Audio Language Changed', description: 'When audio language is changed' }
       ]
     }
-  ],
-  SaaS: [
+  ]),
+  SaaS: combineEvents([
     {
       id: 'user_account',
       name: 'User Account',
@@ -99,8 +152,8 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'plan_changed', name: 'Plan Changed', description: 'When a user changes their subscription plan' }
       ]
     }
-  ],
-  Gaming: [
+  ]),
+  Gaming: combineEvents([
     {
       id: 'gameplay',
       name: 'Gameplay',
@@ -118,27 +171,55 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'virtual_currency_purchased', name: 'Virtual Currency Purchased', description: 'When a user buys virtual currency' }
       ]
     }
-  ],
-  FinTech: [
+  ]),
+  FinTech: combineEvents([
     {
       id: 'transactions',
       name: 'Transactions',
       events: [
-        { id: 'transfer_initiated', name: 'Transfer Initiated', description: 'When a user initiates a transfer' },
-        { id: 'payment_completed', name: 'Payment Completed', description: 'When a payment is completed' },
-        { id: 'bill_paid', name: 'Bill Paid', description: 'When a user pays a bill' }
+        { id: 'transaction_initiated', name: 'Transaction Initiated', description: 'When a user initiates any financial transaction' },
+        { id: 'transaction_completed', name: 'Transaction Completed', description: 'When a transaction is successfully completed' },
+        { id: 'transaction_failed', name: 'Transaction Failed', description: 'When a transaction fails to process' },
+        { id: 'bill_paid', name: 'Bill Paid', description: 'When a user successfully pays a bill' }
+      ]
+    },
+    {
+      id: 'payment_methods',
+      name: 'Payment Methods',
+      events: [
+        { id: 'upi_linked', name: 'UPI Linked', description: 'When a user links their UPI ID' },
+        { id: 'card_added', name: 'Card Added', description: 'When a user adds a new card' },
+        { id: 'card_removed', name: 'Card Removed', description: 'When a user removes a card' }
+      ]
+    },
+    {
+      id: 'loans',
+      name: 'Loans',
+      events: [
+        { id: 'loan_applied', name: 'Loan Applied', description: 'When a user applies for a loan' },
+        { id: 'loan_approved', name: 'Loan Approved', description: 'When a loan application is approved' },
+        { id: 'emi_set', name: 'EMI Set', description: 'When EMI details are configured for a loan' }
       ]
     },
     {
       id: 'investments',
       name: 'Investments',
       events: [
-        { id: 'investment_made', name: 'Investment Made', description: 'When a user makes an investment' },
-        { id: 'portfolio_viewed', name: 'Portfolio Viewed', description: 'When a user views their portfolio' }
+        { id: 'mutual_fund_bought', name: 'Mutual Fund Bought', description: 'When a user purchases mutual fund units' },
+        { id: 'stock_traded', name: 'Stock Traded', description: 'When a user trades stocks' },
+        { id: 'sip_started', name: 'SIP Started', description: 'When a user starts a Systematic Investment Plan' }
+      ]
+    },
+    {
+      id: 'account',
+      name: 'Account Management',
+      events: [
+        { id: 'kyc_verified', name: 'KYC Verified', description: 'When a user completes KYC verification' },
+        { id: 'wallet_recharged', name: 'Wallet Recharged', description: 'When a user adds money to their wallet' }
       ]
     }
-  ],
-  EdTech: [
+  ]),
+  EdTech: combineEvents([
     {
       id: 'learning',
       name: 'Learning Progress',
@@ -158,8 +239,8 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'discussion_posted', name: 'Discussion Posted', description: 'When a user posts in discussions' }
       ]
     }
-  ],
-  Healthcare: [
+  ]),
+  Healthcare: combineEvents([
     {
       id: 'appointments',
       name: 'Appointments',
@@ -178,8 +259,8 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'test_results_viewed', name: 'Test Results Viewed', description: 'When test results are viewed' }
       ]
     }
-  ],
-  RealEstate: [
+  ]),
+  RealEstate: combineEvents([
     {
       id: 'property_search',
       name: 'Property Search',
@@ -198,7 +279,7 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'mortgage_calculator_used', name: 'Mortgage Calculator Used', description: 'When mortgage calculator is used' }
       ]
     }
-  ]
+  ])
 };
 
 export const businessTypes = [
@@ -206,7 +287,7 @@ export const businessTypes = [
   { value: 'OTT', label: 'OTT' },
   { value: 'SaaS', label: 'SaaS' },
   { value: 'EdTech', label: 'EdTech' },
-  { value: 'Fintech', label: 'Fintech' },
+  { value: 'FinTech', label: 'FinTech' },
   { value: 'Gaming', label: 'Gaming' },
   { value: 'Healthcare', label: 'Healthcare' },
   { value: 'RealEstate', label: 'Real Estate' },
