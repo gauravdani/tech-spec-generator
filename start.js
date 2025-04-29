@@ -72,7 +72,8 @@ async function startServer() {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
-  const server = spawn('node', ['server.js'], {
+  // Use npm run dev instead of directly running server.js
+  const server = spawn('npm', ['run', 'dev'], {
     stdio: 'inherit',
     env: {
       ...process.env,

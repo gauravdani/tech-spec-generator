@@ -22,22 +22,37 @@ A web application that generates detailed technical specifications for analytics
    cp .env.example .env
    ```
 4. Add your Claude API key to the `.env` file
-5. Start the server:
-   ```bash
-   npm start
-   ```
-   For development with auto-reload:
+5. Start the application:
+
+   **Option 1: Start both client and server (recommended)**
    ```bash
    npm run dev
    ```
+   This will start both the client and server concurrently.
+
+   **Option 2: Start server only**
+   ```bash
+   cd server && npm run dev
+   ```
+   This will start the server with hot reloading enabled.
+
+   **Option 3: Start client only**
+   ```bash
+   cd client && npm run dev
+   ```
+   This will start the client with hot reloading enabled.
+
+   > **Note:** The `start.js` script at the root level is an alternative way to start the application, but it's recommended to use `npm run dev` for consistency and to take advantage of hot reloading.
 
 ## Usage
 
-1. Open your browser and navigate to `http://localhost:3000`
+1. Open your browser and navigate to `http://localhost:5173` (client)
 2. Select your business type
 3. Fill in the required information about your analytics needs
 4. Click "Generate Specification" to create a detailed technical specification
 5. Use the "Copy to Clipboard" button to copy the generated specification
+
+> **Note:** The client runs on port 5173 (Vite's default port) and communicates with the server on port 3001.
 
 ## Project Structure
 

@@ -4,6 +4,8 @@ const axios = require('axios');
 const fs = require('fs');
 const cors = require('cors');
 const config = require('./config');
+const dotenv = require('dotenv');
+const { PROMPT_TEMPLATE } = require('./src/config/promptTemplate.js');
 
 // Ensure logs directory exists
 const LOG_DIR = path.join(__dirname, config.logDir);
@@ -106,57 +108,17 @@ app.post('/api/generate-spec', async (req, res) => {
             console.log('🟡 SERVER: Using provided prompt');
         } else if (req.body.businessType) {
             // Generate prompt from form data
-            const { businessType, platformType, deviceType, trackingTool, selectedEvents } = req.body;
+            const { businessType, platformTypes, deviceTypes, trackingTool, selectedEvents } = req.body;
             console.log('🟡 SERVER: Generating prompt from form data');
             
-            prompt = `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers.
-it should take into account only the below CONTEXT and REQUIREMENTS and FORMAT.
-
-CONTEXT:
-- Business Type: ${businessType}
-- Platform Type: ${platformType}
-- Device Type: ${deviceType}
-- Tracking Tool: ${trackingTool}
-- Events to Track: ${selectedEvents.join(', ')}
-
-REQUIREMENTS:
-1. Generate ONLY the technical specification for the above events
-2. Each event must include:
-   - Event name
-   - Description
-   - Required and optional properties with example values
-   - Implementation code snippet
-   - Trigger conditions
-   - Reporting Guidelines(in summary) on how to look up the event in the reporting tool
-3.User Identity Handling (anonymous vs registered)
-4.Consent & Privacy Safeguards (GDPR/CCPA-compliant)
-5.Testing Guidelines (how to verify events)
-6.Product Manager Usage Section (reporting/funnel examples)
-7.Documentation Links to SDKs or tools
-8.Ensure code and explanation for each event appear together.
-9.Add an introduction section to the document that explains the purpose of the document and the importance of privacy and data protection.
-10. Directly begin with the document with the title followed by the introduction, "Here is the event tracking specification document in HTML format, based on the provided context and requirements" is not required.
-11. After introduction, add a section with title Dependencies and list all the dependencies , related to SDKs required for the events. This section explains the steps the engineer has to take before tracking begins.Provide any download or install guidelines
-12. Add a section with title mandatory properties and list all the mandatory properties, device_type(tv, mobile, desktop, console, set-top-box, etc), device_manufacturer(manufacturer of device), device_model(actual model of device), device_platform(ios, android, web, etc), user_type(anonymous, registered) as properties for all events.
-
-FORMAT:
-Return the content in clean HTML using ONLY these tags:
-- <h1> through <h4> for headings
-- <p> for paragraphs
-- <table> with <thead> and <tbody> for properties
-- <pre><code> for code snippets
-- <ul> and <ol> for lists
-- <blockquote> for important notes
-- <a> for links
-- <strong> and <em> for emphasis
-
-IMPORTANT:
-- DO NOT include any inline styles or CSS classes
-- DO NOT include any markdown formatting
-- DO NOT include any content outside the scope of the specified events
-- DO NOT include any general information or context
-- DO NOT include any previous conversation context
-- Focus ONLY on the technical implementation details for the specified events`;
+            // Use the global prompt template
+            prompt = PROMPT_TEMPLATE({
+                businessType,
+                platformTypes,
+                deviceTypes,
+                trackingTool,
+                selectedEvents
+            });
         }
 
         if (!prompt) {
