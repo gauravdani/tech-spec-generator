@@ -1,33 +1,13 @@
 import axios from 'axios';
 import { FormData } from '../types/formData';
 import { Response } from 'express';
-import fs from 'fs';
-import path from 'path';
 import { PROMPT_TEMPLATE } from '../config/promptTemplate';
-
-const LOG_DIR = path.resolve(__dirname, '../../logs');
-if (!fs.existsSync(LOG_DIR)) {
-  fs.mkdirSync(LOG_DIR, { recursive: true });
-  console.log(`🟢 Server: Created logs directory at ${LOG_DIR}`);
-} else {
-  console.log(`🟢 Server: Logs directory already exists at ${LOG_DIR}`);
-}
-
-function logToFile(filename: string, data: string) {
-  try {
-    const filePath = path.join(LOG_DIR, filename);
-    fs.appendFileSync(filePath, data + '\n', 'utf8');
-    console.log(`🟢 Server: Successfully logged to ${filename} at ${filePath}`);
-  } catch (error) {
-    console.error(`🔴 Server: Error logging to ${filename}:`, error);
-  }
-}
+import { logInfo, logError, logDebug } from '../utils/logger';
 
 // New function to log the full prompt in a structured format
 function logFullPrompt(formData: FormData, prompt: string) {
-  try {
-    const timestamp = new Date().toISOString();
-    const logEntry = `
+  const timestamp = new Date().toISOString();
+  const logEntry = `
 === FULL PROMPT LOG - ${timestamp} ===
 Business Type: ${formData.businessType}
 Platform Types: ${formData.platformTypes.join(', ')}
@@ -39,12 +19,9 @@ PROMPT:
 ${prompt}
 === END PROMPT ===
 `;
-    
-    logToFile('full_prompts.log', logEntry);
-    console.log(`🟢 Server: Full prompt logged to full_prompts.log`);
-  } catch (error) {
-    console.error(`🔴 Server: Error in logFullPrompt:`, error);
-  }
+  
+  logDebug(logEntry, 'full_prompts.log');
+  logInfo(`Full prompt logged to full_prompts.log`);
 }
 
 export const generateSpecification = async (formData: FormData, res: Response): Promise<void> => {
@@ -58,16 +35,10 @@ export const generateSpecification = async (formData: FormData, res: Response): 
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    console.log('🟢 Server: Starting Claude API request');
+    logInfo('Starting Claude API request');
 
     // Generate the prompt
     const prompt = generatePrompt(formData);
-    
-    // Direct console log of the prompt for debugging
-    console.log('🟢 Server: Generated prompt:');
-    console.log('----------------------------------------');
-    console.log(prompt);
-    console.log('----------------------------------------');
     
     // Log the full prompt in a structured format
     logFullPrompt(formData, prompt);
@@ -83,11 +54,8 @@ export const generateSpecification = async (formData: FormData, res: Response): 
       stream: true
     };
 
-    console.log('🟢 Server: Request data:', JSON.stringify(requestData, null, 2));
-    console.log('🟢 Server: API Key (first 10 chars):', process.env.ANTHROPIC_API_KEY.substring(0, 10));
-
-    // Also log to the existing log file for backward compatibility
-    logToFile('claude_requests.log', `[${new Date().toISOString()}] REQUEST:\n${prompt}\n`);
+    logDebug(`Request data: ${JSON.stringify(requestData, null, 2)}`, 'claude_requests.log');
+    logInfo(`API Key (first 10 chars): ${process.env.ANTHROPIC_API_KEY.substring(0, 10)}`);
 
     try {
       const response = await axios({
@@ -101,12 +69,12 @@ export const generateSpecification = async (formData: FormData, res: Response): 
         },
         responseType: 'stream',
         validateStatus: (status) => {
-          console.log('🟢 Server: Response status:', status);
+          logInfo(`Response status: ${status}`);
           return true; // Don't reject any status codes
         }
       });
 
-      console.log('🟢 Server: Response headers:', response.headers);
+      logInfo(`Response headers: ${JSON.stringify(response.headers)}`);
 
       // If we got an error response, log it completely
       if (response.status !== 200) {
@@ -116,7 +84,7 @@ export const generateSpecification = async (formData: FormData, res: Response): 
         });
         
         response.data.on('end', () => {
-          console.error('🔴 Server: Complete error response:', errorData);
+          logError(`Complete error response: ${errorData}`);
           res.write(`data: ${JSON.stringify({ type: 'error', message: `API Error: ${response.status} - ${errorData}` })}\n\n`);
           res.end();
         });
@@ -131,7 +99,7 @@ export const generateSpecification = async (formData: FormData, res: Response): 
       response.data.on('data', (chunk: Buffer) => {
         const text = chunk.toString();
         fullResponse += text;
-        console.log('🟢 Server: Received chunk:', text);
+        logDebug(`Received chunk: ${text}`, 'claude_stream.log');
 
         const lines = text.split('\n');
         for (const line of lines) {
@@ -144,48 +112,44 @@ export const generateSpecification = async (formData: FormData, res: Response): 
                 res.write(`data: ${JSON.stringify({ type: 'content', text: data.delta.text })}\n\n`);
               }
             } catch (parseError) {
-              console.error('🔴 Server: Parse error:', {
-                error: parseError,
-                line: line,
-                lineLength: line.length
-              });
+              logError(`Parse error: ${parseError}`);
             }
           }
         }
       });
 
       response.data.on('end', () => {
-        logToFile('claude_responses.log', `[${new Date().toISOString()}] RESPONSE:\n${fullResponse}\n`);
-        console.log('🟢 Server: Stream ended normally');
+        logDebug(`Full response: ${fullResponse}`, 'claude_responses.log');
+        logInfo('Stream ended normally');
         res.write('data: {"type":"done"}\n\n');
         res.end();
       });
 
       response.data.on('error', (error: Error) => {
-        console.error('🔴 Server: Stream error:', error);
+        logError(`Stream error: ${error}`);
         res.write(`data: ${JSON.stringify({ type: 'error', message: `Stream error: ${error.message}` })}\n\n`);
         res.end();
       });
 
     } catch (requestError) {
-      console.error('🔴 Server: Request error:', requestError);
+      logError(`Request error: ${requestError}`);
       if (axios.isAxiosError(requestError)) {
-        console.error('🔴 Server: Response data:', requestError.response?.data);
-        console.error('🔴 Server: Response status:', requestError.response?.status);
-        console.error('🔴 Server: Response headers:', requestError.response?.headers);
+        logError(`Response data: ${JSON.stringify(requestError.response?.data)}`);
+        logError(`Response status: ${requestError.response?.status}`);
+        logError(`Response headers: ${JSON.stringify(requestError.response?.headers)}`);
       }
       throw requestError;
     }
 
   } catch (error: unknown) {
-    console.error('🔴 Server: Top-level error:', error);
+    logError(`Top-level error: ${error}`);
     let errorMsg = '';
     if (error instanceof Error) {
       errorMsg = error.stack || error.message;
     } else {
       errorMsg = String(error);
     }
-    logToFile('claude_errors.log', `[${new Date().toISOString()}] ERROR:\n${errorMsg}\n`);
+    logError(errorMsg, 'claude_errors.log');
 
     res.write(`data: ${JSON.stringify({ type: 'error', message: errorMsg })}\n\n`);
     res.end();
@@ -216,10 +180,10 @@ export const testClaudeAPI = async () => {
         }
       }
     );
-    console.log('✅ Claude API access verified successfully!');
+    logInfo('Claude API access verified successfully!');
     return true;
   } catch (error) {
-    console.error('❌ Claude API test failed:', error);
+    logError(`Claude API test failed: ${error}`);
     return false;
   }
 }; 

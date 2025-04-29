@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { eventsByBusinessType, businessTypes, trackingTools, platformTypes, deviceTypes } from './data/events';
 import { API_CONFIG } from './config';
-import './App.css';
+import Landing from './components/Landing';
+import SubscriptionForm from './components/SubscriptionForm';
+import SpecForm from './components/SpecForm';
+import LogViewer from './components/LogViewer';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { Navigation } from './components/common/Navigation';
+import { AuthProvider } from './contexts/AuthContext';
 import html2pdf from 'html2pdf.js';
+import './App.css';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -115,13 +123,12 @@ function App() {
       title.style.textAlign = 'center';
       title.style.marginBottom = '20px';
       title.style.color = '#1e40af';
-      title.style.pageBreakAfter = 'always'; // Force page break after title
+      title.style.pageBreakAfter = 'always';
       contentClone.insertBefore(title, contentClone.firstChild);
       
       // Add page break controls to headings
       const headings = contentClone.querySelectorAll('h1, h2, h3');
       headings.forEach((heading, index) => {
-        // Skip the first heading (title) as we already handled it
         if (index > 0) {
           (heading as HTMLElement).style.pageBreakBefore = 'always';
           (heading as HTMLElement).style.marginTop = '20px';
@@ -156,9 +163,9 @@ function App() {
       }
       contentClone.appendChild(wrapper);
       
-      // Configure PDF options with improved settings
+      // Configure PDF options
       const options = {
-        margin: [15, 15, 15, 15], // [top, right, bottom, left] in mm
+        margin: [15, 15, 15, 15],
         filename: 'trackforge-specification.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
@@ -192,7 +199,7 @@ function App() {
     }
   };
 
-  return (
+  const MainApp = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 p-4">
       <div className="max-w-[1440px] mx-auto">
         <h1 className="text-4xl font-bold text-center text-white mb-6">
@@ -419,6 +426,36 @@ function App() {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-900">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/signup" element={<SubscriptionForm />} />
+            
+            {/* Protected Routes */}
+            <Route
+              path="/app"
+              element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <MainApp />
+                  </>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Fallback Route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

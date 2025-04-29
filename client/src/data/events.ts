@@ -351,6 +351,98 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
         { id: 'mortgage_calculator_used', name: 'Mortgage Calculator Used', description: 'When mortgage calculator is used' }
       ]
     }
+  ]),
+  Marketplace: combineEvents([
+    {
+      id: 'search_and_discovery',
+      name: 'Search and Discovery',
+      events: [
+        { id: 'search_performed', name: 'Search Performed', description: 'When a user searches for items, restaurants, or services' },
+        { id: 'filters_applied', name: 'Filters Applied', description: 'When a user applies search filters (price, rating, distance, etc.)' },
+        { id: 'category_browsed', name: 'Category Browsed', description: 'When a user browses through categories' },
+        { id: 'recommendations_viewed', name: 'Recommendations Viewed', description: 'When a user views personalized recommendations' },
+        { id: 'trending_viewed', name: 'Trending Items Viewed', description: 'When a user views trending items or services' },
+        { id: 'saved_search_created', name: 'Saved Search Created', description: 'When a user saves a search for future use' },
+        { id: 'location_changed', name: 'Location Changed', description: 'When a user changes their delivery or service location' },
+        { id: 'map_view_toggled', name: 'Map View Toggled', description: 'When a user switches between list and map views' }
+      ]
+    },
+    {
+      id: 'listing_interaction',
+      name: 'Listing Interaction',
+      events: [
+        { id: 'listing_viewed', name: 'Listing Viewed', description: 'When a user views a restaurant, property, or service listing' },
+        { id: 'listing_clicked', name: 'Listing Clicked', description: 'When a user clicks on a listing from search results' },
+        { id: 'listing_shared', name: 'Listing Shared', description: 'When a user shares a listing with others' },
+        { id: 'listing_saved', name: 'Listing Saved', description: 'When a user saves a listing to favorites' },
+        { id: 'listing_compared', name: 'Listing Compared', description: 'When a user compares multiple listings' },
+        { id: 'listing_rated', name: 'Listing Rated', description: 'When a user rates a listing' },
+        { id: 'listing_reviewed', name: 'Listing Reviewed', description: 'When a user writes a review for a listing' },
+        { id: 'listing_photos_viewed', name: 'Listing Photos Viewed', description: 'When a user views photos of a listing' },
+        { id: 'listing_details_expanded', name: 'Listing Details Expanded', description: 'When a user expands to view more details' },
+        { id: 'listing_contacted', name: 'Listing Contacted', description: 'When a user contacts the listing owner/provider' }
+      ]
+    },
+    {
+      id: 'booking_and_ordering',
+      name: 'Booking and Ordering',
+      events: [
+        { id: 'cart_added', name: 'Item Added to Cart', description: 'When a user adds an item to their cart' },
+        { id: 'cart_removed', name: 'Item Removed from Cart', description: 'When a user removes an item from their cart' },
+        { id: 'cart_viewed', name: 'Cart Viewed', description: 'When a user views their cart' },
+        { id: 'checkout_started', name: 'Checkout Started', description: 'When a user initiates the checkout process' },
+        { id: 'delivery_options_selected', name: 'Delivery Options Selected', description: 'When a user selects delivery options' },
+        { id: 'payment_method_selected', name: 'Payment Method Selected', description: 'When a user selects a payment method' },
+        { id: 'promo_code_applied', name: 'Promo Code Applied', description: 'When a user applies a promotional code' },
+        { id: 'order_placed', name: 'Order Placed', description: 'When a user successfully places an order' },
+        { id: 'booking_confirmed', name: 'Booking Confirmed', description: 'When a booking is confirmed' },
+        { id: 'order_tracked', name: 'Order Tracked', description: 'When a user tracks their order status' },
+        { id: 'delivery_instructions_added', name: 'Delivery Instructions Added', description: 'When a user adds special delivery instructions' },
+        { id: 'scheduled_delivery_selected', name: 'Scheduled Delivery Selected', description: 'When a user schedules a future delivery' }
+      ]
+    },
+    {
+      id: 'user_account',
+      name: 'User Account',
+      events: [
+        { id: 'account_created', name: 'Account Created', description: 'When a user creates a new account' },
+        { id: 'profile_updated', name: 'Profile Updated', description: 'When a user updates their profile information' },
+        { id: 'preferences_updated', name: 'Preferences Updated', description: 'When a user updates their preferences' },
+        { id: 'address_saved', name: 'Address Saved', description: 'When a user saves a delivery address' },
+        { id: 'payment_method_saved', name: 'Payment Method Saved', description: 'When a user saves a payment method' },
+        { id: 'order_history_viewed', name: 'Order History Viewed', description: 'When a user views their order history' },
+        { id: 'favorites_viewed', name: 'Favorites Viewed', description: 'When a user views their saved favorites' },
+        { id: 'notifications_preferences_updated', name: 'Notification Preferences Updated', description: 'When a user updates notification settings' }
+      ]
+    },
+    {
+      id: 'provider_interaction',
+      name: 'Provider Interaction',
+      events: [
+        { id: 'provider_profile_viewed', name: 'Provider Profile Viewed', description: 'When a user views a provider profile' },
+        { id: 'provider_contacted', name: 'Provider Contacted', description: 'When a user contacts a provider' },
+        { id: 'provider_rated', name: 'Provider Rated', description: 'When a user rates a provider' },
+        { id: 'provider_reviewed', name: 'Provider Reviewed', description: 'When a user writes a review for a provider' },
+        { id: 'provider_followed', name: 'Provider Followed', description: 'When a user follows a provider' },
+        { id: 'provider_menu_viewed', name: 'Provider Menu Viewed', description: 'When a user views a provider menu' },
+        { id: 'provider_availability_checked', name: 'Provider Availability Checked', description: 'When a user checks provider availability' },
+        { id: 'provider_location_viewed', name: 'Provider Location Viewed', description: 'When a user views a provider location on map' }
+      ]
+    },
+    {
+      id: 'post_order',
+      name: 'Post-Order Experience',
+      events: [
+        { id: 'order_received', name: 'Order Received', description: 'When a user confirms receipt of their order' },
+        { id: 'order_rated', name: 'Order Rated', description: 'When a user rates their order experience' },
+        { id: 'order_reviewed', name: 'Order Reviewed', description: 'When a user writes a review for their order' },
+        { id: 'delivery_rated', name: 'Delivery Rated', description: 'When a user rates the delivery experience' },
+        { id: 'reorder_initiated', name: 'Reorder Initiated', description: 'When a user initiates a reorder' },
+        { id: 'refund_requested', name: 'Refund Requested', description: 'When a user requests a refund' },
+        { id: 'issue_reported', name: 'Issue Reported', description: 'When a user reports an issue with their order' },
+        { id: 'support_contacted', name: 'Support Contacted', description: 'When a user contacts customer support' }
+      ]
+    }
   ])
 };
 
@@ -366,7 +458,8 @@ export const businessTypes = [
   { value: 'RealEstate', label: 'Real Estate' },
   { value: 'Travel', label: 'Travel' },
   { value: 'Media', label: 'Media' },
-  { value: 'B2B', label: 'B2B Enterprise' }
+  { value: 'B2B', label: 'B2B Enterprise' },
+  { value: 'Marketplace', label: 'Marketplace (Food Delivery, Ride-sharing, etc.)' }
 ];
 
 export const platformTypes = [
