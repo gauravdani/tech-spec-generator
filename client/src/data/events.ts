@@ -508,6 +508,5 @@ export const trackingTools = [
   { value: 'Twitter Ads', label: 'Twitter Ads' },
   { value: 'Facebook Ads', label: 'Facebook Ads' },
   { value: 'Instagram Ads', label: 'Instagram Ads' },
-  { value: 'LinkedIn Ads', label: 'LinkedIn Ads' },
   { value: 'Customer Journey Analytics', label: 'Customer Journey Analytics' }
 ]; 

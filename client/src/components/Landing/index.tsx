@@ -65,10 +65,10 @@ const Landing: React.FC = () => {
             </p>
             <div className="space-y-4 sm:space-y-0 sm:space-x-4">
               <Link
-                to="/signup"
+                to="/app"
                 className="inline-block px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105"
               >
-                Start Free Trial
+                Get Started
               </Link>
               <Link
                 to="/demo"
