@@ -3,8 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { eventsByBusinessType, businessTypes, trackingTools, platformTypes, deviceTypes } from './data/events';
 import { API_CONFIG } from './config';
 import Landing from './components/Landing';
-import SpecForm from './components/SpecForm';
-import LogViewer from './components/LogViewer';
 import { Navigation } from './components/common/Navigation';
 import html2pdf from 'html2pdf.js';
 import { initGA4, trackPageView, trackButtonClick, trackFormSubmission, trackSpecGeneration } from './utils/analytics';
