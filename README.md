@@ -157,3 +157,69 @@ The generated specification includes:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+### Development
+
+To start the development server:
+
+```bash
+# Start the backend server
+cd server
+npm install
+npm run dev
+
+# In a new terminal, start the frontend
+cd client
+npm install
+npm run dev
+```
+
+### Build Process
+
+To build the project for production:
+
+```bash
+cd client
+npm run build
+```
+
+The build process will generate optimized files in the `dist` directory. Note that there might be warnings about chunk sizes being larger than 500 kB after minification. To optimize the build in the future, consider:
+
+1. Using dynamic imports for code splitting
+2. Configuring manual chunks in the Rollup options
+3. Adjusting the chunk size warning limit
+
+### Docker Deployment (Server)
+
+To deploy the server using Docker:
+
+1. Create a `Dockerfile` in the server directory:
+   ```dockerfile
+   FROM node:18-alpine
+   WORKDIR /app
+   COPY package*.json ./
+   RUN npm install
+   COPY . .
+   EXPOSE 3001
+   CMD ["npm", "start"]
+   ```
+
+2. Build the Docker image:
+   ```bash
+   cd server
+   docker build -t tech-spec-server .
+   ```
+
+3. Run the container:
+   ```bash
+   docker run -p 3001:3001 --env-file .env tech-spec-server
+   ```
+
+> **Note:** Make sure your `.env` file is present in the server directory before building the image.
+
+### Project Structure
+
+- `client/` - React frontend application
+- `server/` - Express backend server
+- `.env` - Environment variables (not in version control)
+- `.env.example` - Example environment variables template
