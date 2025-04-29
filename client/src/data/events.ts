@@ -109,6 +109,78 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
       ]
     }
   ]),
+  eCommerceAggregator: combineEvents([
+    {
+      id: 'marketplace',
+      name: 'Marketplace Interactions',
+      events: [
+        { id: 'seller_viewed', name: 'Seller Viewed', description: 'When a user views a seller profile' },
+        { id: 'seller_rated', name: 'Seller Rated', description: 'When a user rates a seller' },
+        { id: 'seller_contacted', name: 'Seller Contacted', description: 'When a user contacts a seller' },
+        { id: 'seller_followed', name: 'Seller Followed', description: 'When a user follows a seller' },
+        { id: 'seller_products_viewed', name: 'Seller Products Viewed', description: 'When a user views all products from a seller' },
+        { id: 'seller_reviews_viewed', name: 'Seller Reviews Viewed', description: 'When a user views seller reviews' },
+        { id: 'seller_compare', name: 'Seller Compare', description: 'When a user compares multiple sellers' },
+        { id: 'seller_filter', name: 'Seller Filter Applied', description: 'When a user applies filters to seller search' }
+      ]
+    },
+    {
+      id: 'product_aggregation',
+      name: 'Product Aggregation',
+      events: [
+        { id: 'product_compared', name: 'Product Compared', description: 'When a user compares products across sellers' },
+        { id: 'price_alert_set', name: 'Price Alert Set', description: 'When a user sets a price alert for a product' },
+        { id: 'price_history_viewed', name: 'Price History Viewed', description: 'When a user views price history for a product' },
+        { id: 'best_deal_found', name: 'Best Deal Found', description: 'When a user finds the best deal for a product' },
+        { id: 'product_availability_checked', name: 'Product Availability Checked', description: 'When a user checks product availability across sellers' },
+        { id: 'product_reviews_aggregated', name: 'Product Reviews Aggregated', description: 'When a user views aggregated reviews for a product' },
+        { id: 'product_specs_compared', name: 'Product Specs Compared', description: 'When a user compares product specifications' },
+        { id: 'product_recommendations', name: 'Product Recommendations Viewed', description: 'When a user views product recommendations' }
+      ]
+    },
+    {
+      id: 'order_management',
+      name: 'Order Management',
+      events: [
+        { id: 'order_tracked', name: 'Order Tracked', description: 'When a user tracks their order across sellers' },
+        { id: 'order_history_viewed', name: 'Order History Viewed', description: 'When a user views their order history' },
+        { id: 'order_cancelled', name: 'Order Cancelled', description: 'When a user cancels an order' },
+        { id: 'order_returned', name: 'Order Returned', description: 'When a user returns an order' },
+        { id: 'order_refunded', name: 'Order Refunded', description: 'When a user receives a refund' },
+        { id: 'order_reviewed', name: 'Order Reviewed', description: 'When a user reviews their order' },
+        { id: 'order_shared', name: 'Order Shared', description: 'When a user shares their order details' },
+        { id: 'order_invoice_downloaded', name: 'Order Invoice Downloaded', description: 'When a user downloads their order invoice' }
+      ]
+    },
+    {
+      id: 'user_preferences',
+      name: 'User Preferences',
+      events: [
+        { id: 'favorite_sellers_added', name: 'Favorite Sellers Added', description: 'When a user adds sellers to favorites' },
+        { id: 'favorite_products_added', name: 'Favorite Products Added', description: 'When a user adds products to favorites' },
+        { id: 'price_range_set', name: 'Price Range Set', description: 'When a user sets their preferred price range' },
+        { id: 'seller_preferences_set', name: 'Seller Preferences Set', description: 'When a user sets their seller preferences' },
+        { id: 'notification_preferences_updated', name: 'Notification Preferences Updated', description: 'When a user updates their notification preferences' },
+        { id: 'shipping_preferences_set', name: 'Shipping Preferences Set', description: 'When a user sets their shipping preferences' },
+        { id: 'payment_preferences_set', name: 'Payment Preferences Set', description: 'When a user sets their payment preferences' },
+        { id: 'language_preferences_set', name: 'Language Preferences Set', description: 'When a user sets their language preferences' }
+      ]
+    },
+    {
+      id: 'search_and_discovery',
+      name: 'Search and Discovery',
+      events: [
+        { id: 'search_performed', name: 'Search Performed', description: 'When a user searches for products or sellers' },
+        { id: 'search_filters_applied', name: 'Search Filters Applied', description: 'When a user applies search filters' },
+        { id: 'search_saved', name: 'Search Saved', description: 'When a user saves a search' },
+        { id: 'trending_products_viewed', name: 'Trending Products Viewed', description: 'When a user views trending products' },
+        { id: 'trending_sellers_viewed', name: 'Trending Sellers Viewed', description: 'When a user views trending sellers' },
+        { id: 'category_browsed', name: 'Category Browsed', description: 'When a user browses product categories' },
+        { id: 'recommendations_viewed', name: 'Recommendations Viewed', description: 'When a user views personalized recommendations' },
+        { id: 'discovery_feed_viewed', name: 'Discovery Feed Viewed', description: 'When a user views the discovery feed' }
+      ]
+    }
+  ]),
   OTT: combineEvents([
     {
       id: 'streaming',
@@ -284,6 +356,7 @@ export const eventsByBusinessType: Record<string, EventCategory[]> = {
 
 export const businessTypes = [
   { value: 'eCommerce', label: 'eCommerce' },
+  { value: 'eCommerceAggregator', label: 'eCommerce Aggregator' },
   { value: 'OTT', label: 'OTT' },
   { value: 'SaaS', label: 'SaaS' },
   { value: 'EdTech', label: 'EdTech' },
@@ -316,6 +389,8 @@ export const trackingTools = [
   { value: 'GTM', label: 'Google Tag Manager' },
   { value: 'RudderStack', label: 'RudderStack' },
   { value: 'Mixpanel', label: 'Mixpanel' },
+  { value: 'HighTouch', label: 'High Touch' },
+  { value: 'Mparticle', label: 'Mparticle' },
   { value: 'Adobe', label: 'Adobe Analytics' },
   { value: 'Amplitude', label: 'Amplitude' },
   { value: 'Heap', label: 'Heap' },

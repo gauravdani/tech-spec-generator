@@ -276,14 +276,14 @@ function App() {
               {/* Events Section */}
               <div className="mt-4 mb-4">
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Select Events to Track</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
                   {eventsByBusinessType[formData.businessType]?.map((category) => (
                     <div
                       key={category.id}
                       className="bg-gray-50 p-3 rounded-lg"
                     >
                       <h4 className="text-gray-700 font-medium mb-2">{category.name}</h4>
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {category.events.map((event) => (
                           <div
                             key={event.id}

@@ -3,15 +3,48 @@ import { FormData } from '../types/formData';
 import { Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { PROMPT_TEMPLATE } from '../config/promptTemplate';
 
 const LOG_DIR = path.resolve(__dirname, '../../logs');
 if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
+  console.log(`🟢 Server: Created logs directory at ${LOG_DIR}`);
+} else {
+  console.log(`🟢 Server: Logs directory already exists at ${LOG_DIR}`);
 }
 
 function logToFile(filename: string, data: string) {
-  const filePath = path.join(LOG_DIR, filename);
-  fs.appendFileSync(filePath, data + '\n', 'utf8');
+  try {
+    const filePath = path.join(LOG_DIR, filename);
+    fs.appendFileSync(filePath, data + '\n', 'utf8');
+    console.log(`🟢 Server: Successfully logged to ${filename} at ${filePath}`);
+  } catch (error) {
+    console.error(`🔴 Server: Error logging to ${filename}:`, error);
+  }
+}
+
+// New function to log the full prompt in a structured format
+function logFullPrompt(formData: FormData, prompt: string) {
+  try {
+    const timestamp = new Date().toISOString();
+    const logEntry = `
+=== FULL PROMPT LOG - ${timestamp} ===
+Business Type: ${formData.businessType}
+Platform Types: ${formData.platformTypes.join(', ')}
+Device Types: ${formData.deviceTypes.join(', ')}
+Tracking Tool: ${formData.trackingTool}
+Selected Events: ${formData.selectedEvents.join(', ')}
+
+PROMPT:
+${prompt}
+=== END PROMPT ===
+`;
+    
+    logToFile('full_prompts.log', logEntry);
+    console.log(`🟢 Server: Full prompt logged to full_prompts.log`);
+  } catch (error) {
+    console.error(`🔴 Server: Error in logFullPrompt:`, error);
+  }
 }
 
 export const generateSpecification = async (formData: FormData, res: Response): Promise<void> => {
@@ -27,12 +60,24 @@ export const generateSpecification = async (formData: FormData, res: Response): 
 
     console.log('🟢 Server: Starting Claude API request');
 
+    // Generate the prompt
+    const prompt = generatePrompt(formData);
+    
+    // Direct console log of the prompt for debugging
+    console.log('🟢 Server: Generated prompt:');
+    console.log('----------------------------------------');
+    console.log(prompt);
+    console.log('----------------------------------------');
+    
+    // Log the full prompt in a structured format
+    logFullPrompt(formData, prompt);
+    
     // First, let's log the exact request we're about to make
     const requestData = {
       model: "claude-3-opus-20240229",
       messages: [{
         role: "user",
-        content: generatePrompt(formData)
+        content: prompt
       }],
       max_tokens: 4000,
       stream: true
@@ -41,7 +86,7 @@ export const generateSpecification = async (formData: FormData, res: Response): 
     console.log('🟢 Server: Request data:', JSON.stringify(requestData, null, 2));
     console.log('🟢 Server: API Key (first 10 chars):', process.env.ANTHROPIC_API_KEY.substring(0, 10));
 
-    const prompt = generatePrompt(formData);
+    // Also log to the existing log file for backward compatibility
     logToFile('claude_requests.log', `[${new Date().toISOString()}] REQUEST:\n${prompt}\n`);
 
     try {
@@ -148,33 +193,7 @@ export const generateSpecification = async (formData: FormData, res: Response): 
 };
 
 const generatePrompt = (formData: FormData): string => {
-  const eventsList = formData.selectedEvents
-    .map(event => `- ${event}`)
-    .join('\n');
-
-  return `Generate a detailed, privacy-compliant event tracking specification document for a ${formData.businessType} business.
-
-Technical Context:
-- Platforms: ${formData.platformTypes.join(', ')}
-- Device Types: ${formData.deviceTypes.join(', ')}
-- Tracking Tool: ${formData.trackingTool}
-
-Selected Events to Document:
-${eventsList}
-
-For each selected event above, include:
-1. Event Name and Description
-2. Required and Optional Properties (in a table format)
-3. Implementation Example
-4. Trigger Conditions
-5. Testing Guidelines
-
-Please format the output as a well-structured HTML document with:
-- Semantic HTML elements
-- Tables for event properties
-- Code blocks for examples
-- Proper heading hierarchy (h1, h2, h3, h4)
-- Clear spacing between sections`;
+  return PROMPT_TEMPLATE(formData);
 };
 
 export const testClaudeAPI = async () => {
