@@ -30,6 +30,39 @@ const Landing: React.FC = () => {
     }
   ];
 
+  const assistantBenefits = [
+    {
+      title: "Always Available",
+      description: "Generate specifications 24/7 without waiting for a human expert to be available.",
+      icon: "⏰"
+    },
+    {
+      title: "Consistent Quality",
+      description: "Get the same high-quality output every time, eliminating human error and inconsistency.",
+      icon: "✨"
+    },
+    {
+      title: "Instant Expertise",
+      description: "Access deep analytics knowledge without years of training or hiring expensive consultants.",
+      icon: "🧠"
+    },
+    {
+      title: "Scalable Solution",
+      description: "Handle multiple projects simultaneously without quality degradation or time constraints.",
+      icon: "📈"
+    },
+    {
+      title: "Cost Effective",
+      description: "Save thousands on consulting fees and internal resources while getting better results.",
+      icon: "💰"
+    },
+    {
+      title: "Self-Improving",
+      description: "Our AI assistant continuously learns from new data to provide increasingly better specifications.",
+      icon: "🔄"
+    }
+  ];
+
   const testimonials = [
     {
       quote: "TrackForge AI has revolutionized how we handle analytics implementation. What used to take days now takes minutes.",
@@ -56,10 +89,13 @@ const Landing: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-2">
+              <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">Track Forge AI</span>
+            </h1>
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Transform Your Analytics
               <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text"> Implementation</span>
-            </h1>
+            </h2>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
               Generate engineering-grade tracking specifications with AI. Save time, reduce errors, and ensure compliance.
             </p>
@@ -98,14 +134,41 @@ const Landing: React.FC = () => {
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-                className="bg-gray-700 p-8 rounded-xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`bg-gradient-to-br ${feature.color} rounded-xl p-8 shadow-lg`}
               >
-                <div className={`text-4xl mb-4 bg-gradient-to-r ${feature.color} text-white p-3 rounded-lg inline-block`}>
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-300">{feature.description}</p>
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                <p className="text-blue-100">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Assistant Benefits Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Your Perfect Analytics Implementation Assistant
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Track Forge AI is like having a dedicated analytics expert available 24/7, ready to help with your implementation needs
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {assistantBenefits.map((benefit, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 hover:border-blue-500 transition-all"
+              >
+                <div className="text-3xl mb-4">{benefit.icon}</div>
+                <h3 className="text-lg font-bold text-white mb-2">{benefit.title}</h3>
+                <p className="text-gray-300">{benefit.description}</p>
               </motion.div>
             ))}
           </div>
@@ -113,29 +176,29 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-900">
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Trusted by Analytics Professionals
+              Trusted by analytics professionals
             </h2>
+            <p className="text-xl text-gray-300">
+              See what our users have to say about Track Forge AI
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.2 }}
-                className="bg-gray-800 p-8 rounded-xl shadow-xl"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-gray-800 rounded-xl p-8 shadow-lg border border-gray-700"
               >
-                <p className="text-gray-300 text-lg mb-4">"{testimonial.quote}"</p>
-                <div className="flex items-center">
-                  <div>
-                    <p className="text-white font-semibold">{testimonial.author}</p>
-                    <p className="text-gray-400">{testimonial.role}</p>
-                    <p className="text-gray-500">{testimonial.company}</p>
-                  </div>
+                <p className="text-gray-300 italic mb-6">"{testimonial.quote}"</p>
+                <div>
+                  <p className="text-white font-bold">{testimonial.author}</p>
+                  <p className="text-blue-400">{testimonial.role}, {testimonial.company}</p>
                 </div>
               </motion.div>
             ))}
@@ -146,18 +209,24 @@ const Landing: React.FC = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to transform your analytics implementation?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of analytics professionals who trust TrackForge AI
-          </p>
-          <Link
-            to="/signup"
-            className="inline-block px-8 py-4 text-lg font-medium text-blue-600 bg-white rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Start Your Free Trial
-          </Link>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Ready to transform your analytics implementation?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+              Join thousands of analytics professionals who trust Track Forge AI to streamline their tracking specifications
+            </p>
+            <Link
+              to="/app"
+              className="inline-block px-8 py-4 text-lg font-medium text-blue-600 bg-white rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg"
+            >
+              Get Started
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>
