@@ -20,13 +20,14 @@ REQUIREMENTS:
    - Introduction
    - Installation Instructions
    - Implementation Guidelines (for each event)
-   - User Identity Handling
-   - Consent & Privacy Safeguards
+   - User Identity Handling (with code snippets if any)
+   - Consent & Privacy Safeguards  (with code snippets if any)
    - Testing Guidelines
    - Product Manager Usage Section (reporting/funnel examples)
    - Documentation Links to SDKs or tools
+   - Best Practices
 3. Each Implementation Guideline for each event must include:
-   - Event name
+   - Title: Event name
    - Description
    - Required and optional properties with example values
    - Implementation code snippet

@@ -1,10 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { eventsByBusinessType, businessTypes, trackingTools, platformTypes, deviceTypes } from './data/events';
 import { API_CONFIG } from './config';
-import './App.css';
+import Landing from './components/Landing';
+import SpecForm from './components/SpecForm';
+import LogViewer from './components/LogViewer';
+import { Navigation } from './components/common/Navigation';
 import html2pdf from 'html2pdf.js';
+import { initGA4, trackPageView, trackButtonClick, trackFormSubmission, trackSpecGeneration } from './utils/analytics';
+import './App.css';
 
-function App() {
+// Page tracking component
+const PageTracker: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location]);
+
+  return <>{children}</>;
+};
+
+const MainApp: React.FC = () => {
   const [formData, setFormData] = useState({
     businessType: 'eCommerce',
     platformTypes: ['Web'],
@@ -24,11 +41,20 @@ function App() {
     setSelectedEvents([]);
   }, [formData.businessType]);
 
+  // Initialize GA4
+  useEffect(() => {
+    initGA4();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     setSpecContent('');
+
+    // Track form submission
+    trackFormSubmission('specification_form');
+    trackSpecGeneration(formData.businessType, formData.trackingTool);
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GENERATE_SPEC}`, {
@@ -93,6 +119,7 @@ function App() {
       navigator.clipboard.writeText(textToCopy)
         .then(() => {
           setCopySuccess('Copied!');
+          trackButtonClick('copy_to_clipboard', 'content_action');
           setTimeout(() => setCopySuccess(''), 2000);
         })
         .catch(err => {
@@ -105,83 +132,17 @@ function App() {
   const downloadPDF = () => {
     if (outputRef.current) {
       setPdfLoading(true);
-      
-      // Create a clone of the content to avoid modifying the original
-      const contentClone = outputRef.current.cloneNode(true) as HTMLElement;
-      
-      // Add a title to the PDF
-      const title = document.createElement('h1');
-      title.textContent = 'TrackForge AI Specification';
-      title.style.textAlign = 'center';
-      title.style.marginBottom = '20px';
-      title.style.color = '#1e40af';
-      title.style.pageBreakAfter = 'always'; // Force page break after title
-      contentClone.insertBefore(title, contentClone.firstChild);
-      
-      // Add page break controls to headings
-      const headings = contentClone.querySelectorAll('h1, h2, h3');
-      headings.forEach((heading, index) => {
-        // Skip the first heading (title) as we already handled it
-        if (index > 0) {
-          (heading as HTMLElement).style.pageBreakBefore = 'always';
-          (heading as HTMLElement).style.marginTop = '20px';
-        }
-      });
-      
-      // Add page break controls to tables
-      const tables = contentClone.querySelectorAll('table');
-      tables.forEach(table => {
-        (table as HTMLElement).style.pageBreakInside = 'avoid';
-        (table as HTMLElement).style.marginBottom = '20px';
-      });
-      
-      // Add page break controls to code blocks
-      const codeBlocks = contentClone.querySelectorAll('pre');
-      codeBlocks.forEach(codeBlock => {
-        (codeBlock as HTMLElement).style.pageBreakInside = 'avoid';
-        (codeBlock as HTMLElement).style.marginBottom = '20px';
-      });
-      
-      // Add a wrapper div with proper styling for PDF
-      const wrapper = document.createElement('div');
-      wrapper.style.padding = '20px';
-      wrapper.style.fontFamily = 'Arial, sans-serif';
-      wrapper.style.fontSize = '12pt';
-      wrapper.style.lineHeight = '1.5';
-      wrapper.style.color = '#333';
-      
-      // Move the content into the wrapper
-      while (contentClone.firstChild) {
-        wrapper.appendChild(contentClone.firstChild);
-      }
-      contentClone.appendChild(wrapper);
-      
-      // Configure PDF options with improved settings
-      const options = {
-        margin: [15, 15, 15, 15], // [top, right, bottom, left] in mm
-        filename: 'trackforge-specification.pdf',
+      trackButtonClick('download_pdf', 'content_action');
+      const element = outputRef.current;
+      const opt = {
+        margin: 1,
+        filename: 'tracking-specification.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: true
-        },
-        pagebreak: { 
-          mode: ['avoid-all', 'css', 'legacy'],
-          before: '.page-break-before',
-          after: '.page-break-after',
-          avoid: ['tr', 'td', 'th', 'img', 'pre', 'code']
-        }
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as 'portrait' | 'landscape' }
       };
-      
-      // Generate PDF
-      html2pdf().from(contentClone).set(options).save()
+
+      html2pdf().set(opt).from(element).save()
         .then(() => {
           setPdfLoading(false);
         })
@@ -193,24 +154,25 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 p-4">
-      <div className="max-w-[1440px] mx-auto">
-        <h1 className="text-4xl font-bold text-center text-white mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
+        <h1 className="text-4xl font-bold text-center text-white mb-10">
           TrackForge AI
+          <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text"> Specification Generator</span>
         </h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Left Column - Form */}
-          <div className="lg:col-span-3 bg-white rounded-lg shadow-lg p-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Generate Specification</h2>
+          <div className="lg:col-span-4 bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-700">
+            <h2 className="text-2xl font-bold text-white mb-6">Generate Specification</h2>
             
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-6 mb-6">
                 {/* Business Type */}
                 <div>
-                  <label className="block text-gray-700 mb-2">Business Type</label>
+                  <label className="block text-gray-300 mb-3">Business Type</label>
                   <select
-                    className="w-full p-2 border rounded text-gray-800 bg-white"
+                    className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white"
                     value={formData.businessType}
                     onChange={(e) => setFormData({...formData, businessType: e.target.value})}
                   >
@@ -222,9 +184,9 @@ function App() {
                 
                 {/* Tracking Tool */}
                 <div>
-                  <label className="block text-gray-700 mb-2">Tracking Tool</label>
+                  <label className="block text-gray-300 mb-3">Tracking Tool</label>
                   <select
-                    className="w-full p-2 border rounded text-gray-800 bg-white"
+                    className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white"
                     value={formData.trackingTool}
                     onChange={(e) => setFormData({...formData, trackingTool: e.target.value})}
                   >
@@ -236,10 +198,10 @@ function App() {
                 
                 {/* Platform Types */}
                 <div>
-                  <label className="block text-gray-700 mb-2">Platform Types (Multiple)</label>
+                  <label className="block text-gray-300 mb-3">Platform Types (Multiple)</label>
                   <select
                     multiple
-                    className="w-full p-2 border rounded text-gray-800 bg-white h-32"
+                    className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white h-36"
                     value={formData.platformTypes}
                     onChange={(e) => {
                       const options = Array.from(e.target.selectedOptions).map(option => option.value);
@@ -250,15 +212,15 @@ function App() {
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
-                  <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple platforms</p>
+                  <p className="text-sm text-gray-400 mt-2">Hold Ctrl/Cmd to select multiple</p>
                 </div>
                 
                 {/* Device Types */}
                 <div>
-                  <label className="block text-gray-700 mb-2">Device Types (Multiple)</label>
+                  <label className="block text-gray-300 mb-3">Device Types (Multiple)</label>
                   <select
                     multiple
-                    className="w-full p-2 border rounded text-gray-800 bg-white h-32"
+                    className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white h-36"
                     value={formData.deviceTypes}
                     onChange={(e) => {
                       const options = Array.from(e.target.selectedOptions).map(option => option.value);
@@ -269,25 +231,25 @@ function App() {
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
-                  <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple devices</p>
+                  <p className="text-sm text-gray-400 mt-2">Hold Ctrl/Cmd to select multiple</p>
                 </div>
               </div>
 
               {/* Events Section */}
-              <div className="mt-4 mb-4">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Select Events to Track</h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+              <div className="mt-6 mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Select Events to Track</h3>
+                <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
                   {eventsByBusinessType[formData.businessType]?.map((category) => (
                     <div
                       key={category.id}
-                      className="bg-gray-50 p-3 rounded-lg"
+                      className="bg-gray-700 p-4 rounded-lg border border-gray-600"
                     >
-                      <h4 className="text-gray-700 font-medium mb-2">{category.name}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <h4 className="text-gray-200 font-medium mb-3">{category.name}</h4>
+                      <div className="grid grid-cols-1 gap-3">
                         {category.events.map((event) => (
                           <div
                             key={event.id}
-                            className="flex items-start space-x-2"
+                            className="flex items-start space-x-3"
                           >
                             <input
                               type="checkbox"
@@ -300,13 +262,13 @@ function App() {
                                     : [...prev, event.id]
                                 );
                               }}
-                              className="mt-1 h-4 w-4 text-blue-600 rounded"
+                              className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-600 bg-gray-700"
                             />
                             <label htmlFor={event.id} className="flex-1 cursor-pointer">
-                              <span className="block text-gray-700 font-medium">
+                              <span className="block text-gray-200 font-medium">
                                 {event.name}
                               </span>
-                              <span className="block text-xs text-gray-500">
+                              <span className="block text-xs text-gray-400 mt-1">
                                 {event.description}
                               </span>
                             </label>
@@ -321,9 +283,12 @@ function App() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-2 px-4 rounded font-semibold ${
-                  isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                } text-white`}
+                onClick={() => trackButtonClick('generate_specification', 'form_action')}
+                className={`w-full py-3 px-4 rounded font-semibold ${
+                  isLoading 
+                    ? 'bg-gray-600 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                } text-white transition-all transform hover:scale-105`}
               >
                 {isLoading ? 'Generating...' : 'Generate Specification'}
               </button>
@@ -331,23 +296,26 @@ function App() {
 
             {/* Error Message */}
             {error && (
-              <div className="mt-4 p-3 bg-red-50 text-red-700 rounded border border-red-200">
+              <div className="mt-6 p-4 bg-red-900/50 text-red-200 rounded border border-red-800">
                 {error}
               </div>
             )}
           </div>
           
           {/* Right Column - Output */}
-          <div className="lg:col-span-9 flex flex-col h-[calc(100vh-8rem)]">
+          <div className="lg:col-span-8 flex flex-col h-[calc(100vh-10rem)]">
             {/* Top Row - 80% height */}
-            <div className="flex-[0.8] content-container mb-4 overflow-hidden flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Generated Specification</h2>
+            <div className="flex-[0.8] bg-white rounded-lg shadow-lg p-8 mb-6 border border-gray-200 overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Technical Implementation Guide</h2>
                 {specContent && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
-                      onClick={copyToClipboard}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      onClick={() => {
+                        copyToClipboard();
+                        trackButtonClick('copy_to_clipboard', 'content_action');
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
@@ -356,9 +324,12 @@ function App() {
                       {copySuccess || 'Copy to Clipboard'}
                     </button>
                     <button
-                      onClick={downloadPDF}
+                      onClick={() => {
+                        downloadPDF();
+                        trackButtonClick('download_pdf', 'content_action');
+                      }}
                       disabled={pdfLoading}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-md hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed"
                     >
                       {pdfLoading ? (
                         <>
@@ -383,14 +354,14 @@ function App() {
               <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                 <div className="absolute inset-0">
                   {error ? (
-                    <div className="error-message">
+                    <div className="error-message text-red-600">
                       <p>{error}</p>
                     </div>
                   ) : (
-                    <div className="p-4 h-full">
+                    <div className="p-6 h-full">
                       <div 
                         ref={outputRef}
-                        className="markdown-content"
+                        className="markdown-content prose max-w-none prose-headings:text-gray-900 prose-h1:text-gray-900 prose-h2:text-gray-900 prose-h3:text-gray-900 prose-h4:text-gray-900 prose-h5:text-gray-900 prose-h6:text-gray-900 prose-p:text-gray-800 prose-li:text-gray-800 prose-strong:text-gray-900 prose-code:text-blue-600 prose-pre:bg-gray-100 prose-pre:text-gray-800 prose-blockquote:text-gray-700 prose-blockquote:border-gray-300"
                         dangerouslySetInnerHTML={{ __html: specContent }}
                       />
                     </div>
@@ -405,11 +376,11 @@ function App() {
             </div>
             
             {/* Bottom Row - 20% height */}
-            <div className="flex-[0.2] content-container overflow-hidden flex flex-col">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Additional Information</h2>
+            <div className="flex-[0.2] bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-700 overflow-hidden flex flex-col">
+              <h2 className="text-xl font-bold text-white mb-4">Additional Information</h2>
               <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                <div className="absolute inset-0 p-4">
-                  <p className="text-gray-700">
+                <div className="absolute inset-0 p-6">
+                  <p className="text-gray-300">
                     This section can contain additional details, notes, or related information about your generated specification.
                   </p>
                 </div>
@@ -419,6 +390,35 @@ function App() {
         </div>
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <PageTracker>
+        <div className="min-h-screen bg-gray-900">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            
+            {/* App Routes */}
+            <Route
+              path="/app"
+              element={
+                <>
+                  <Navigation />
+                  <MainApp />
+                </>
+              }
+            />
+            
+            {/* Fallback Route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </PageTracker>
+    </Router>
   );
 }
 
