@@ -4,15 +4,22 @@
  */
 
 const PROMPT_TEMPLATE = (formData) => {
-  return `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers.
-it should take into account only the below CONTEXT and REQUIREMENTS and FORMAT.
-
-CONTEXT:
+  let contextSection = `CONTEXT:
 - Business Type: ${formData.businessType}
 - Platform Type: ${formData.platformTypes.join(', ')}
 - Device Type: ${formData.deviceTypes.join(', ')}
 - Tracking Tool: ${formData.trackingTool}
-- Events to Track: ${formData.selectedEvents.join(', ')}
+- Events to Track: ${formData.selectedEvents.join(', ')}`;
+
+  // Add additional context if provided
+  if (formData.additionalContext && formData.additionalContext.trim()) {
+    contextSection += `\n\nADDITIONAL CONTEXT:\n${formData.additionalContext}`;
+  }
+
+  return `As a data engineer, generate a detailed, privacy-compliant event tracking specification document to be used by frontend/mobile engineers and product managers.
+it should take into account only the below CONTEXT and REQUIREMENTS and FORMAT.
+
+${contextSection}
 
 REQUIREMENTS:
 1. Generate ONLY the technical specification for the above events. Title should be "Analytics Tracking Specification Document for ${formData.businessType} on ${formData.platformTypes.join(', ')} platform(s)"
@@ -27,7 +34,7 @@ REQUIREMENTS:
    - Documentation Links to SDKs or tools
    - Best Practices
 3. Each Implementation Guideline for each event must include:
-   - Title: Event name
+   - Event name
    - Description
    - Required and optional properties with example values
    - Implementation code snippet
@@ -40,9 +47,9 @@ REQUIREMENTS:
 8.Documentation Links to SDKs or tools
 9.Ensure code and explanation for each event appear together.
 10.Add an introduction section to the document that explains the purpose of the document and the importance of privacy and data protection.
-11. Directly begin with the document with the title followed by the introduction, "Here is the event tracking specification document in HTML format, based on the provided context and requirements" is not required.
-12. After introduction, add a section with title Dependencies and list installation instructions (Where, What, How) associated with platform type, related to SDKs/JS Libraries required for the events.
-13. Add a section with title mandatory properties and list all the mandatory properties, device_type(tv, mobile, desktop, console, set-top-box, etc), device_manufacturer(manufacturer of device), device_model(actual model of device), device_platform(ios, android, web, etc), user_type(anonymous, registered) as properties for all events.
+11. Directly begin with the document with the title followed by the introduction, "Here is the event tracking specification document in HTML format, based on the provided context and requirements" is not required. 
+12. After introduction, add a section with title Dependencies and list installation instructions (Where, What, How) associated with platform type, related to SDKs/JS Libraries required for the events.Add guidelines to remove any provisions related to autocapture of data
+13. Add a section with title mandatory properties and list all the mandatory properties, device_type(tv, mobile, desktop, console, set-top-box, etc), device_manufacturer(manufacturer of device), device_model(actual model of device), device_platform(ios, android, web, etc), user_type(anonymous, registered), logged_in(true, false), is_subscribed(true, false) as properties for all events.
 14. Code snippets should be in the language from platform types, if not specified, use javascript.
 
 FORMAT:

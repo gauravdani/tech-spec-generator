@@ -101,32 +101,36 @@ app.post('/api/generate-spec', async (req, res) => {
     try {
         console.log('🟡 SERVER: Starting /api/generate-spec endpoint');
         
-        // Get prompt either directly or generate it from form data
-        let prompt;
-        if (req.body.prompt) {
-            prompt = req.body.prompt;
-            console.log('🟡 SERVER: Using provided prompt');
-        } else if (req.body.businessType) {
-            // Generate prompt from form data
-            const { businessType, platformTypes, deviceTypes, trackingTool, selectedEvents } = req.body;
-            console.log('🟡 SERVER: Generating prompt from form data');
-            
-            // Use the global prompt template
-            prompt = PROMPT_TEMPLATE({
+        const {
+            businessType,
+            platformTypes,
+            deviceTypes,
+            trackingTool,
+            selectedEvents,
+            prompt,
+            additionalContext
+        } = req.body;
+
+        let promptToUse;
+        if (prompt) {
+            promptToUse = prompt;
+        } else {
+            promptToUse = PROMPT_TEMPLATE({
                 businessType,
                 platformTypes,
                 deviceTypes,
                 trackingTool,
-                selectedEvents
+                selectedEvents,
+                additionalContext
             });
         }
 
-        if (!prompt) {
+        if (!promptToUse) {
             console.log('🔴 SERVER: Invalid request format - No prompt or business type provided');
             return res.status(400).json({ error: 'Invalid request format' });
         }
 
-        console.log('🟡 SERVER: Generated/Received prompt:', prompt.substring(0, 100) + '...');
+        console.log('🟡 SERVER: Generated/Received prompt:', promptToUse.substring(0, 100) + '...');
 
         // Set headers for streaming
         console.log('🟡 SERVER: Setting up SSE headers');
@@ -140,11 +144,11 @@ app.post('/api/generate-spec', async (req, res) => {
                 'https://api.anthropic.com/v1/messages',
                 {
                     model: "claude-3-opus-20240229",
-                    max_tokens: 4000,
+                    max_tokens: config.maxTokens,
                     stream: true,
                     messages: [{
                         role: "user",
-                        content: prompt
+                        content: promptToUse
                     }]
                 },
                 {

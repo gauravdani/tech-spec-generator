@@ -7,6 +7,8 @@ interface StreamMessage {
   status?: 'started' | 'complete';
 }
 
+const API_BASE_URL = 'http://localhost:3000';
+
 export const generateSpecification = async (
   formData: SpecFormData, 
   onContent: (content: string) => void,
@@ -16,7 +18,7 @@ export const generateSpecification = async (
   logger.info('API', 'Starting API call');
 
   try {
-    const response = await fetch('/api/generate-spec', {
+    const response = await fetch(`${API_BASE_URL}/api/generate-spec`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
