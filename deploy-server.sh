@@ -35,6 +35,7 @@ fi
 echo "📝 Setting environment variables on Heroku..."
 heroku config:set ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" --app tech-spec-generator-server
 heroku config:set NODE_ENV="production" --app tech-spec-generator-server
+heroku config:set CLIENT_URL="https://iridescent-kitsune-bb54c5.netlify.app" --app tech-spec-generator-server
 
 # Note about PORT
 echo "ℹ️ Note: Heroku will automatically assign its own PORT variable"
