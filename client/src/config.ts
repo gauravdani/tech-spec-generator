@@ -2,10 +2,15 @@
  * Application configuration
  */
 
+// Environment detection
+const isProd = import.meta.env.PROD;
+
 // API configuration
 export const API_CONFIG = {
   // Base URL for API requests
-  BASE_URL: 'http://localhost:3000',
+  BASE_URL: isProd 
+    ? 'https://tech-spec-generator-server-a925ce447590.herokuapp.com'
+    : 'http://localhost:3000',
   
   // API endpoints
   ENDPOINTS: {
