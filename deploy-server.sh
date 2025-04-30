@@ -37,6 +37,15 @@ heroku config:set ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" --app tech-spec-generat
 heroku config:set NODE_ENV="production" --app tech-spec-generator-server
 heroku config:set CLIENT_URL="https://iridescent-kitsune-bb54c5.netlify.app" --app tech-spec-generator-server
 
+# Set MAX_TOKENS if provided in .env, otherwise use default
+if [ -n "$MAX_TOKENS" ]; then
+    echo "Setting MAX_TOKENS from .env..."
+    heroku config:set MAX_TOKENS="$MAX_TOKENS" --app tech-spec-generator-server
+else
+    echo "Setting default MAX_TOKENS=1000..."
+    heroku config:set MAX_TOKENS="1000" --app tech-spec-generator-server
+fi
+
 # Note about PORT
 echo "ℹ️ Note: Heroku will automatically assign its own PORT variable"
 echo "   Your application should use: process.env.PORT || 3000"
@@ -47,10 +56,10 @@ while IFS='=' read -r key value; do
     if [ -z "$key" ] || [[ $key == \#* ]] || \
        [[ $key == "ANTHROPIC_API_KEY" ]] || \
        [[ $key == "NODE_ENV" ]] || \
-       [[ $key == "PORT" ]]; then
+       [[ $key == "PORT" ]] || \
+       [[ $key == "CLIENT_URL" ]]; then
         continue
     fi
-    echo "Setting $key..."
     heroku config:set "$key=$value" --app tech-spec-generator-server
 done < .env
 
@@ -79,11 +88,14 @@ if [ "$answer" = "y" ]; then
     
     # Verify deployment
     echo "🔍 Verifying deployment..."
-    curl -s https://tech-spec-generator-server-a925ce447590.herokuapp.com/api/health || {
+    if curl -s https://tech-spec-generator-server-a925ce447590.herokuapp.com/api/health | grep -q "status.*ok"; then
+        echo "✅ Server is responding correctly!"
+    else
         echo "❌ Health check failed"
+        echo "Response from server:"
+        curl -v https://tech-spec-generator-server-a925ce447590.herokuapp.com/api/health
         exit 1
-    }
-    echo "✅ Server is responding correctly!"
+    fi
 else
     echo "⏹️ Deployment cancelled"
 fi 

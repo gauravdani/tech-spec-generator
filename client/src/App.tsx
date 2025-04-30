@@ -5,6 +5,7 @@ import { API_CONFIG } from './config';
 import Landing from './components/Landing';
 import { Navigation } from './components/common/Navigation';
 import ContextInput from './components/ContextInput';
+import Feedback from './components/Feedback';
 import html2pdf from 'html2pdf.js';
 import { initGA4, trackPageView, trackButtonClick, trackFormSubmission, trackSpecGeneration } from './utils/analytics';
 import './App.css';
@@ -489,24 +490,12 @@ function App() {
   return (
     <Router>
       <PageTracker>
-        <div className="min-h-screen bg-gray-900">
+        <div className="App">
+          <Navigation />
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<Landing />} />
-            
-            {/* App Routes */}
-            <Route
-              path="/app"
-              element={
-                <>
-                  <Navigation />
-                  <MainApp />
-                </>
-              }
-            />
-            
-            {/* Fallback Route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/app" element={<MainApp />} />
+            <Route path="/feedback" element={<Feedback />} />
           </Routes>
         </div>
       </PageTracker>
