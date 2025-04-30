@@ -27,7 +27,17 @@ const app = express();
 
 // Middleware setup
 app.use(cors({
-  origin: config.clientUrl,
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      config.clientUrl,
+      'https://iridescent-kitsune-bb54c5.netlify.app'
+    ];
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: true
 }));
