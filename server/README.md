@@ -488,3 +488,52 @@ M2 is a Production Process Manager for Node.js applications
 ├────┼─────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
 │ 0  │ tech-spec-server    │ default     │ N/A     │ fork    │ 65644    │ 0s     │ 0    │ online    │ 0%       │ 1.7mb    │ dan0002g │ disabled │
 └────┴────────────────────
+
+# Server Deployment Guide
+
+## Heroku Configuration
+
+Before deploying, set up the required environment variables on Heroku:
+
+```bash
+# Set Anthropic API Key
+heroku config:set ANTHROPIC_API_KEY="your_api_key_here" --app tech-spec-generator-server
+
+# Set Node environment to production
+heroku config:set NODE_ENV="production" --app tech-spec-generator-server
+
+# Set allowed client URL (your Netlify URL)
+heroku config:set CLIENT_URL="https://your-netlify-app-url.netlify.app" --app tech-spec-generator-server
+
+# Optional: Set custom port (Heroku usually handles this automatically)
+heroku config:set PORT="3000" --app tech-spec-generator-server
+```
+
+To verify the configuration:
+```bash
+heroku config --app tech-spec-generator-server
+```
+
+## Deployment
+
+After setting the configuration, deploy using:
+```bash
+./deploy-server.sh
+```
+
+## Testing the Deployment
+
+Test the API health endpoint:
+```bash
+curl https://tech-spec-generator-server-a925ce447590.herokuapp.com/api/health
+```
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "message": "Server is running",
+  "timestamp": "2025-04-30T09:45:23.456Z",
+  "environment": "production"
+}
+```
