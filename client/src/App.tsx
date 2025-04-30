@@ -4,6 +4,7 @@ import { eventsByBusinessType, businessTypes, trackingTools, platformTypes, devi
 import { API_CONFIG } from './config';
 import Landing from './components/Landing';
 import { Navigation } from './components/common/Navigation';
+import ContextInput from './components/ContextInput';
 import html2pdf from 'html2pdf.js';
 import { initGA4, trackPageView, trackButtonClick, trackFormSubmission, trackSpecGeneration } from './utils/analytics';
 import './App.css';
@@ -32,7 +33,9 @@ const MainApp: React.FC = () => {
   const [specContent, setSpecContent] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState<string>('');
   const [pdfLoading, setPdfLoading] = useState<boolean>(false);
+  const [tokenCount, setTokenCount] = useState<number>(0);
   const outputRef = useRef<HTMLDivElement>(null);
+  const [isContextLoading, setIsContextLoading] = useState(false);
 
   // Clear selected events when business type changes
   useEffect(() => {
@@ -49,6 +52,7 @@ const MainApp: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setSpecContent('');
+    setTokenCount(0);
 
     // Track form submission
     trackFormSubmission('specification_form');
@@ -95,8 +99,10 @@ const MainApp: React.FC = () => {
               const data = JSON.parse(line.slice(6));
               if (data.html) {
                 setSpecContent(prev => prev + data.html);
-              } else if (data.text) {
-                setSpecContent(prev => prev + data.text);
+                // Update token count if provided
+                if (data.tokenCount) {
+                  setTokenCount(data.tokenCount);
+                }
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
@@ -148,6 +154,66 @@ const MainApp: React.FC = () => {
           console.error('Failed to generate PDF:', err);
           setPdfLoading(false);
         });
+    }
+  };
+
+  const handleContextSend = async (context: string) => {
+    setIsContextLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GENERATE_SPEC}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessType: formData.businessType,
+          trackingTool: formData.trackingTool,
+          platformTypes: formData.platformTypes,
+          deviceTypes: formData.deviceTypes,
+          selectedEvents,
+          additionalContext: context
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No reader available');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.html) {
+                setSpecContent(prev => prev + data.html);
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsContextLoading(false);
     }
   };
 
@@ -375,17 +441,45 @@ const MainApp: React.FC = () => {
             
             {/* Bottom Row - 20% height */}
             <div className="flex-[0.2] bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-700 overflow-hidden flex flex-col">
-              <h2 className="text-xl font-bold text-white mb-4">Additional Information</h2>
-              <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                <div className="absolute inset-0 p-6">
-                  <p className="text-gray-300">
-                    This section can contain additional details, notes, or related information about your generated specification.
-                  </p>
-                </div>
+              <h2 className="text-xl font-bold text-white mb-4">Additional Context</h2>
+              <div className="flex-1 relative">
+                <ContextInput
+                  onSend={handleContextSend}
+                  isLoading={isContextLoading}
+                  placeholder="Add more requirements or ask for clarification..."
+                  className="w-full h-full"
+                />
               </div>
             </div>
           </div>
         </div>
+        {specContent && (
+          <div className="disclaimer mt-6 bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg shadow-lg p-6 border border-gray-700 text-gray-300 text-sm group relative flex items-center justify-between animate-fade-in">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Note: The output is being rationed at 1000 tokens, since this is a personal project.</span>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-xs text-gray-300 rounded shadow-lg border border-gray-700 w-64">
+                Token limits help manage API costs and response times. For unlimited tokens, consider deploying your own instance.
+              </div>
+            </div>
+            <div className="flex items-center ml-4">
+              <div className="mr-3 text-sm">
+                <span className="text-blue-400 font-semibold">{tokenCount}</span>
+                <span className="text-gray-400">/1000 tokens</span>
+              </div>
+              <div className="w-24 h-2 bg-gray-900 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    tokenCount > 800 ? 'bg-red-500' : tokenCount > 500 ? 'bg-yellow-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${Math.min((tokenCount / 1000) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -419,5 +513,18 @@ function App() {
     </Router>
   );
 }
+
+// Add keyframes for fade-in animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+`;
+document.head.appendChild(style);
 
 export default App; 

@@ -124,3 +124,141 @@ npm run build
 - Support for multiple tracking tools
 - PDF export functionality
 - Modern, responsive UI 
+
+# Client
+
+Frontend application for the Analytics Technical Specification Generator.
+
+## Features
+
+### Core Features
+- Generate analytics specifications based on business type
+- Support for multiple business verticals
+- Real-time specification generation
+- Copy to clipboard functionality
+
+### Additional Context Feature
+1. **Context Input Field**
+   - Textarea below generated specifications
+   - Placeholder: "Add additional context or requirements..."
+   - Support for multi-line input (Shift + Enter)
+   - Enter key sends the message
+
+2. **Implementation Details**
+   ```typescript
+   // components/ContextInput.tsx
+   interface ContextInputProps {
+     onSend: (context: string) => void;
+     placeholder?: string;
+   }
+
+   // Handle key press
+   const handleKeyPress = (e: React.KeyboardEvent) => {
+     if (e.key === 'Enter' && !e.shiftKey) {
+       e.preventDefault();
+       handleSend();
+     }
+   };
+   ```
+
+3. **API Integration**
+   ```typescript
+   // services/api.ts
+   interface GenerateSpecRequest {
+     businessType: string;
+     platformTypes: string[];
+     deviceTypes: string[];
+     trackingTool: string;
+     additionalContext?: string;
+   }
+
+   const generateSpec = async (data: GenerateSpecRequest) => {
+     const response = await fetch('/api/generate-spec', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify(data),
+     });
+     return response.json();
+   };
+   ```
+
+4. **Styling**
+   ```css
+   .context-input {
+     @apply mt-4 w-full p-3 rounded-lg border border-gray-300;
+     @apply focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+     @apply dark:bg-gray-800 dark:border-gray-700;
+   }
+
+   .send-button {
+     @apply mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg;
+     @apply hover:bg-blue-600 transition-colors;
+     @apply disabled:opacity-50 disabled:cursor-not-allowed;
+   }
+   ```
+
+## Configuration
+
+### Environment Variables
+```env
+VITE_API_URL=http://localhost:3001
+VITE_MAX_TOKENS=4096  # Maximum tokens for API request
+```
+
+### Server Integration
+- Update server's `.env` to include:
+  ```env
+  MAX_TOKENS=4096  # Configurable token limit
+  ```
+
+## Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start development server:
+   ```bash
+   npm run dev
+   ```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Project Structure
+
+```
+client/
+├── src/
+│   ├── components/
+│   │   ├── SpecForm.tsx
+│   │   ├── ContextInput.tsx    # New component
+│   │   └── GeneratedSpec.tsx
+│   ├── services/
+│   │   └── api.ts
+│   └── App.tsx
+├── .env
+└── package.json
+```
+
+## Implementation Steps
+
+1. Create ContextInput component
+2. Add to GeneratedSpec component
+3. Update API service
+4. Add environment variables
+5. Update server configuration
+
+## Testing
+
+```bash
+npm run test
+```
+
+## Styling
+
+Using Tailwind CSS for consistent styling across components. 
