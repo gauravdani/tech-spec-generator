@@ -69,6 +69,7 @@ IMPORTANT:
 - DO NOT include any content outside the scope of the specified events
 - DO NOT include any general information or context
 - DO NOT include any previous conversation context
+- DO NOT hallucinate. Say No , there are not enought details provided.
 - Focus ONLY on the technical implementation details for the specified events`;
 };
 

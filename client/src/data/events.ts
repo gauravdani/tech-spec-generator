@@ -496,6 +496,7 @@ export const trackingTools = [
   { value: 'GA4', label: 'Google Analytics 4 (GA4)' },
   { value: 'AEP', label: 'Adobe Experience Platform (AEP)' },
   { value: 'PostHog', label: 'PostHog' },
+  { value: 'Tealium', label: 'Tealium' },
   { value: 'FullStory', label: 'FullStory' },
   { value: 'Kafka', label: 'Kafka' },
   { value: 'Kinesis', label: 'Kinesis' },
