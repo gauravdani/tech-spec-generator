@@ -161,6 +161,7 @@ const MainApp: React.FC = () => {
   const handleContextSend = async (context: string) => {
     setIsContextLoading(true);
     setError(null);
+    setSpecContent('');
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GENERATE_SPEC}`, {
@@ -204,6 +205,10 @@ const MainApp: React.FC = () => {
               const data = JSON.parse(line.slice(6));
               if (data.html) {
                 setSpecContent(prev => prev + data.html);
+                // Update token count if provided
+                if (data.tokenCount) {
+                  setTokenCount(data.tokenCount);
+                }
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
@@ -374,43 +379,47 @@ const MainApp: React.FC = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Technical Implementation Guide</h2>
                 {specContent && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
                     <button
-                      onClick={() => {
-                        copyToClipboard();
-                        trackButtonClick('copy_to_clipboard', 'content_action');
-                      }}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105"
+                      onClick={copyToClipboard}
+                      className="flex-1 py-3 px-4 rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all transform hover:scale-105 active:scale-95 min-h-[44px] flex items-center justify-center"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                      {copySuccess || 'Copy to Clipboard'}
+                      {copySuccess ? (
+                        <span className="flex items-center">
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {copySuccess}
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                          </svg>
+                          Copy to Clipboard
+                        </span>
+                      )}
                     </button>
                     <button
-                      onClick={() => {
-                        downloadPDF();
-                        trackButtonClick('download_pdf', 'content_action');
-                      }}
+                      onClick={downloadPDF}
                       disabled={pdfLoading}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-md hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                      className="flex-1 py-3 px-4 rounded-md font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all transform hover:scale-105 active:scale-95 min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {pdfLoading ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <span className="flex items-center">
+                          <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                           Generating PDF...
-                        </>
+                        </span>
                       ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <span className="flex items-center">
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          Download PDF
-                        </>
+                          Save as PDF
+                        </span>
                       )}
                     </button>
                   </div>

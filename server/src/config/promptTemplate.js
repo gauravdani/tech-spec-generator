@@ -70,7 +70,17 @@ IMPORTANT:
 - DO NOT include any general information or context
 - DO NOT include any previous conversation context
 - DO NOT hallucinate. Say No , there are not enought details provided.
-- Focus ONLY on the technical implementation details for the specified events`;
+- Focus ONLY on the technical implementation details for the specified events
+
+EXCEPTIONS:
+- DO NOT generate reporting guidelines for the following tools. These are just data enablers, data platforms but do not have reporting capabilities.
+  - Tealium
+  - Hightouch
+  - Google Tag Manager
+  - Segment 
+  - Mparticle `;
+
+
 };
 
 module.exports = { PROMPT_TEMPLATE }; 
